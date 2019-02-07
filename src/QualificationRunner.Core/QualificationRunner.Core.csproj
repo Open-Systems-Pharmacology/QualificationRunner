@@ -165,14 +165,28 @@
     <Compile Include="..\..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="Assets\Resources.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Domain\BuildingBlock.cs" />
+    <Compile Include="Domain\ExitCodes.cs" />
+    <Compile Include="Domain\LogWatcher.cs" />
+    <Compile Include="Domain\Project.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="OSPSuiteCore\QualificationConfiguration.cs" />
+    <Compile Include="OSPSuiteCore\QualificationMapping.cs" />
+    <Compile Include="QualificationRunnerException.cs" />
+    <Compile Include="Services\ExpandoObjectHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QualificationRunnerConfiguration.cs" />
     <Compile Include="QualificationRunnerRegister.cs" />
     <Compile Include="RunOptions\QualificationRunOptions.cs" />
     <Compile Include="Services\IBatchRunner.cs" />
+    <Compile Include="Services\ILogWatcherFactory.cs" />
+    <Compile Include="Services\IQualificationEngineFactory.cs" />
+    <Compile Include="Services\JsonSerializer.cs" />
     <Compile Include="Services\QualificationRunner.cs" />
     <Compile Include="Services\QualificationRunnerLogger.cs" />
+    <Compile Include="Services\QualificationEngine.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

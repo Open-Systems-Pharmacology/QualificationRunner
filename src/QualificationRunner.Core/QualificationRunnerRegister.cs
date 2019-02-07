@@ -1,6 +1,7 @@
 ﻿using Castle.Facilities.TypedFactory;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core;
+using OSPSuite.Core.Services;
 using OSPSuite.Infrastructure.Container.Castle;
 using OSPSuite.Utility.Container;
 using OSPSuite.Utility.Extensions;
@@ -14,6 +15,8 @@ namespace QualificationRunner.Core
    {
       public void RegisterInContainer(IContainer container)
       {
+         registerCoreDependencies(container);
+
          container.AddScanner(x =>
          {
             x.AssemblyContainingType<QualificationRunnerRegister>();
@@ -24,6 +27,26 @@ namespace QualificationRunner.Core
          });
 
          container.Register<IBatchRunner<QualificationRunOptions>, Services.QualificationRunner>();
+
+         container.RegisterFactory<IQualificationEngineFactory>();
+         container.RegisterFactory<IStartableProcessFactory>();
+         container.RegisterFactory<ILogWatcherFactory>();
+      }
+
+
+      private void registerCoreDependencies(IContainer container)
+      {
+//         container.Register<ICompression, SharpLibCompression>();
+//         container.Register<IStringCompression, StringCompression>();
+//
+//         container.Register<IUnitSystemXmlSerializerRepository, UnitSystemXmlSerializerRepository>(LifeStyle.Singleton);
+//         container.Resolve<IUnitSystemXmlSerializerRepository>().PerformMapping();
+//         container.Register<IDimensionFactoryPersistor, DimensionFactoryPersistor>();
+//
+//         container.Register<IExceptionManager, ExceptionManager>(LifeStyle.Singleton);
+//         container.Register<IEventPublisher, EventPublisher>(LifeStyle.Singleton);
+//         container.Register<DirectoryMapSettings, DirectoryMapSettings>(LifeStyle.Singleton);
+         container.Register<StartableProcess, StartableProcess>();
       }
 
       private static void registerLogging(IContainer container)

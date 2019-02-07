@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using Microsoft.Win32;
 using OSPSuite.Assets;
 using OSPSuite.Core;
 using OSPSuite.Core.Domain;
@@ -8,6 +10,7 @@ namespace QualificationRunner.Core
 {
    public interface IQualificationRunnerConfiguration : IApplicationConfiguration
    {
+      string PKSimCLIPath { get; }
    }
 
    public class QualificationRunnerConfiguration : OSPSuiteConfiguration, IQualificationRunnerConfiguration
@@ -25,5 +28,24 @@ namespace QualificationRunner.Core
       protected override string[] LatestVersionWithOtherMajor { get; } = new String[0];
       public override string WatermarkOptionLocation { get; } = "Options -> Settings -> Application";
       public override string ApplicationFolderPathName { get; } = Constants.APPLICATION_FOLDER_PATH;
+
+      public string PKSimCLIPath => Path.Combine(PKSimInstallFolderPath, Constants.Tools.PKSIM_CLI);
+
+      public string PKSimInstallFolderPath => getRegistryValueForRegistryPathAndKey(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+
+
+      private string getRegistryValueForRegistryPathAndKey(string openSystemsPharmacology, string installDir)
+      {
+         try
+         {
+            //TODO
+            return @"C:\projects\PK-Sim\src\PKSim.CLI\bin\Debug";
+            return (string)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{MajorVersion}", installDir, null);
+         }
+         catch (Exception)
+         {
+            return string.Empty;
+         }
+      }
    }
 }

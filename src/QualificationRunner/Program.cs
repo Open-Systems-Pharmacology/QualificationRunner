@@ -2,38 +2,33 @@
 using System.Threading;
 using CommandLine;
 using Microsoft.Extensions.Logging;
+using OSPSuite.Core.Extensions;
 using OSPSuite.Core.Services;
 using OSPSuite.Infrastructure.Logging;
 using OSPSuite.Utility.Container;
 using QualificationRunner.Bootstrap;
 using QualificationRunner.Commands;
+using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.Services;
 using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner
 {
-   [Flags]
-   enum ExitCodes
-   {
-      Success = 0,
-      Error = 1 << 0,
-   }
-
    class Program
    {
+      static bool _valid = true;
+
       static int Main(string[] args)
       {
-         //starting batch tool with arguments
-         var valid = true;
 
          ApplicationStartup.Initialize();
 
          Parser.Default.ParseArguments<QualificationRunCommand>(args)
             .WithParsed(startCommand)
-            .WithNotParsed(err => valid = false);
+            .WithNotParsed(err => _valid = false);
 
-         Thread.Sleep(1000);
-         if (!valid)
+         Console.ReadLine();
+         if (!_valid)
             return (int) ExitCodes.Error;
 
          return (int) ExitCodes.Success;
@@ -49,13 +44,15 @@ namespace QualificationRunner
          try
          {
             runner.RunBatchAsync(command.ToRunOptions()).Wait();
+            logger.AddInfo($"{command.Name} run finished");
          }
          catch (Exception e)
          {
-            logger.AddException(e);
+            logger.AddError(e.ExceptionMessage());
+            logger.AddError($"{command.Name} run failed");
+            _valid = false;
          }
 
-         logger.AddInfo($"{command.Name} run finished");
       }
 
       private static ILogger initializeLogger(CLICommand runCommand)
