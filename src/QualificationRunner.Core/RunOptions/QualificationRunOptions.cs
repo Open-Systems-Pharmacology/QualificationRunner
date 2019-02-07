@@ -10,8 +10,11 @@ namespace QualificationRunner.Core.RunOptions
       public string ReportConfigurationFileName { get; set; }
       public bool ForceDelete { get; set; }
       public LogLevel LogLevel { get; set; }
-      public string LogFileFullPath { get; set; }
+      public string LogFile { get; set; }
+
 
       public string ObservedDataFolder => Path.Combine(OutputFolder, Constants.OBSERVED_DATA_FOLDER);
+
+      public string ReportConfigurationFile => Path.Combine(OutputFolder, $"{ReportConfigurationFileName}.json");
    }
 }

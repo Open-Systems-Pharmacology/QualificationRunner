@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Extensions;
 using OSPSuite.Core.Qualification;
@@ -13,7 +13,6 @@ using OSPSuite.Utility;
 using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
-using static QualificationRunner.Core.Services.ExpandoObjectHelpers;
 using static QualificationRunner.Core.Assets.Errors;
 using static QualificationRunner.Core.Constants;
 using Project = QualificationRunner.Core.Domain.Project;
@@ -37,11 +36,13 @@ namespace QualificationRunner.Core.Services
       public async Task RunBatchAsync(QualificationRunOptions runOptions)
       {
          _runOptions = runOptions;
-         var qualificationPlan = await _jsonSerializer.Deserialize<ExpandoObject>(runOptions.ConfigurationFile);
-         if (!HasProperty(qualificationPlan, Configuration.PROJECTS))
+         dynamic qualificationPlan = await _jsonSerializer.Deserialize<dynamic>(runOptions.ConfigurationFile);
+
+         IReadOnlyList<Project> projects = GetListFrom<Project>(qualificationPlan.Projects);
+
+         if (projects == null)
             throw new QualificationRunnerException(ProjectsNotDefinedInQualificationFile);
 
-         IReadOnlyList<Project> projects = GetListFrom<Project>(ByName(qualificationPlan, Configuration.PROJECTS));
          IReadOnlyList<Plot> allPlots = retrieveProjectPlots(qualificationPlan);
 
          var begin = DateTime.UtcNow;
@@ -66,14 +67,15 @@ namespace QualificationRunner.Core.Services
 //         if (invalidRunResults.Any())
 //            throw new QualificationRunnerException(invalidRunResults);
 
-//         await createReportConfigurationPlan(runResults, qualificationPlan);
+         //TODO replace with runResults
+         await createReportConfigurationPlan(validations, qualificationPlan);
 
          var end = DateTime.UtcNow;
          var timeSpent = end - begin;
          _logger.AddInfo($"Qualification scenario finished in {timeSpent.ToDisplay()}");
       }
 
-      private Task copyStaticFiles(ExpandoObject qualificationPlan)
+      private Task copyStaticFiles(dynamic qualificationPlan)
       {
          //Sections
          var currentFolder = FileHelper.FolderFromFileFullPath(_runOptions.ConfigurationFile);
@@ -83,12 +85,9 @@ namespace QualificationRunner.Core.Services
             CopyDirectory(contentFolder, _runOptions.OutputFolder);
 
          //Observed Data
-         if (HasProperty(qualificationPlan, Configuration.OBSERVED_DATA_SETS))
-         {
-            //Path is relative to input file and should be adapted 
-            IReadOnlyList<ObservedDataMapping> observedDataSets = GetListFrom<ObservedDataMapping>(ByName(qualificationPlan, Configuration.OBSERVED_DATA_SETS));
-            observedDataSets?.Each(copyObservedData);
-         }
+         //Path is relative to input file and should be adapted 
+         IReadOnlyList<ObservedDataMapping> observedDataSets = GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
+         observedDataSets?.Each(copyObservedData);
 
          return Task.CompletedTask;
       }
@@ -104,12 +103,25 @@ namespace QualificationRunner.Core.Services
          fileInfo.CopyTo(Path.Combine(_runOptions.ObservedDataFolder, fileInfo.Name), overwrite: true);
       }
 
-      private Task createReportConfigurationPlan(QualificationRunResult[] runResults, dynamic qualificationPlan)
+      private async Task createReportConfigurationPlan(QualificationRunResult[] runResults, dynamic qualificationPlan)
       {
-         dynamic reportConfigurationPlan = new ExpandoObject();
-         reportConfigurationPlan.Hello = "xxxx";
-         return Task.CompletedTask;
+         dynamic reportConfigurationPlan = new JObject();
+
+         reportConfigurationPlan.Sections = qualificationPlan.Sections;
+         var plots = qualificationPlan.Plots;
+         RemoveByName(plots, Configuration.ALL_PLOTS);
+
+         var mappings = await Task.WhenAll(runResults.Select(x => _jsonSerializer.Deserialize<QualificationMapping>(x.MappingFile)));
+         var timeProfiles = new JArray();
+
+         mappings.SelectMany(x => x.Plots).Each(p => { timeProfiles.Add(toJObject(p)); });
+
+         plots.TimeProfile = timeProfiles;
+         reportConfigurationPlan.Plots = plots;
+         await _jsonSerializer.Serialize(reportConfigurationPlan, _runOptions.ReportConfigurationFile);
       }
+
+      private JObject toJObject(object p) => _jsonSerializer.DeserializeFromString<dynamic>(_jsonSerializer.SerializeAsString(p));
 
       private Task<QualificationRunResult> validateProject(QualifcationConfiguration qualificationConfiguration)
       {
@@ -131,12 +143,15 @@ namespace QualificationRunner.Core.Services
       {
          var projectId = project.Id;
 
-         var tmpFolder = Path.Combine(_runOptions.OutputFolder, "temp", projectId);
-
-         if (DirectoryHelper.DirectoryExists(tmpFolder))
-            DirectoryHelper.DeleteDirectory(tmpFolder, true);
-
+         var tmpFolder = Path.Combine(_runOptions.OutputFolder, "temp");
          DirectoryHelper.CreateDirectory(tmpFolder);
+
+         var tmpProjectFolder = Path.Combine(tmpFolder, projectId);
+
+//         if (DirectoryHelper.DirectoryExists(tmpProjectFolder))
+//            DirectoryHelper.DeleteDirectory(tmpProjectFolder, true);
+
+         DirectoryHelper.CreateDirectory(tmpProjectFolder);
 
          return new QualifcationConfiguration
          {
@@ -144,9 +159,9 @@ namespace QualificationRunner.Core.Services
             OutputFolder = _runOptions.OutputFolder,
             ReportConfigurationFile = _runOptions.ConfigurationFile,
             ObservedDataFolder = _runOptions.ObservedDataFolder,
-            MappingFile = Path.Combine(tmpFolder, "mapping.json"),
+            MappingFile = Path.Combine(tmpProjectFolder, "mapping.json"),
             SnapshotFile = snapshotFileFor(project),
-            TempFolder = tmpFolder,
+            TempFolder = tmpProjectFolder,
             BuildingBlocks = mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationPlots = mapPlots(allPlots, projectId)
          };
@@ -184,20 +199,29 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<Plot> retrieveProjectPlots(dynamic reportConfiguration)
       {
-         if (!HasProperty(reportConfiguration, Configuration.PLOTS))
+         var plots = reportConfiguration.Plots;
+         if (plots == null)
             return null;
 
-         var plots = ByName(reportConfiguration, Configuration.PLOTS);
-         if (!HasProperty(plots, Configuration.ALL_PLOTS))
-            return null;
-
-         return GetListFrom<Plot>(ByName(plots, Configuration.ALL_PLOTS));
+         return GetListFrom<Plot>(plots.AllPlots);
       }
 
-      public dynamic ByName(ExpandoObject obj, string propertyName)
+//      public dynamic ByName(ExpandoObject obj, string propertyName)
+//      {
+//         if (obj == null)
+//            return null;
+//
+//         var byName = (IDictionary<string, object>) obj;
+//         if (byName.ContainsKey(propertyName))
+//            return byName[propertyName];
+//
+//         return null;
+//      }
+//
+      public void RemoveByName(JObject obj, string propertyName)
       {
-         var byName = (IDictionary<string, object>) obj;
-         return byName[propertyName];
+         var prop = obj?[propertyName];
+         prop?.Parent.Remove();
       }
 
       public T Cast<T>(dynamic obj) where T : class
@@ -209,6 +233,8 @@ namespace QualificationRunner.Core.Services
       public IReadOnlyList<T> GetListFrom<T>(dynamic enumerable) where T : class
       {
          var list = new List<T>();
+         if (enumerable == null)
+            return list;
 
          foreach (var item in enumerable)
          {

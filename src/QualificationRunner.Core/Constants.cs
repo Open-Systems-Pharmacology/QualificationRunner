@@ -23,6 +23,7 @@ namespace QualificationRunner.Core
       public static class Configuration
       {
          public const string PROJECTS = "Projects";
+         public const string SECTIONS = "Sections";
          public const string OBSERVED_DATA_SETS = "ObservedDataSets";
          public const string PLOTS = "Plots";
          public const string ALL_PLOTS = "AllPlots";

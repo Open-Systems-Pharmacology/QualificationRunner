@@ -27,7 +27,7 @@ namespace QualificationRunner.Core
       {
       }
 
-      public QualificationRunnerException(IReadOnlyList<QualificationRunResult> invalidResults) : base(invalidResults.Select(x => Errors.ProjectConfigurationNotValid(x.ProjectId, x.LogFileFullPath)).ToString("\n"))
+      public QualificationRunnerException(IReadOnlyList<QualificationRunResult> invalidResults) : base(invalidResults.Select(x => Errors.ProjectConfigurationNotValid(x.ProjectId, x.LogFile)).ToString("\n"))
       {
       }
    }

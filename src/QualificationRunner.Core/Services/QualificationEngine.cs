@@ -19,12 +19,17 @@ namespace QualificationRunner.Core.Services
       /// <summary>
       ///    Path of the log file associated with the run
       /// </summary>
-      public string LogFileFullPath { get; set; }
+      public string LogFile { get; set; }
 
       /// <summary>
       ///    Path of the config file associated with the rin
       /// </summary>
-      public string ConfigFileFullPath { get; set; }
+      public string ConfigFile { get; set; }
+
+      /// <summary>
+      /// Name of the mapping file created as a result of the qualification run
+      /// </summary>
+      public string MappingFile { get; set; }
 
       /// <summary>
       ///    Was the run successful
@@ -74,12 +79,12 @@ namespace QualificationRunner.Core.Services
          var logFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
 
-
          var qualificationRunResult = new QualificationRunResult
          {
-            ConfigFileFullPath = configFile,
-            LogFileFullPath = logFile,
-            ProjectId = qualifcationConfiguration.ProjectId
+            ConfigFile = configFile,
+            LogFile = logFile,
+            ProjectId = qualifcationConfiguration.ProjectId,
+            MappingFile = qualifcationConfiguration.MappingFile
          };
 
          await _jsonSerializer.Serialize(qualifcationConfiguration, configFile);
@@ -99,7 +104,7 @@ namespace QualificationRunner.Core.Services
          var args = new List<string>
          {
             "qualification",
-            "-f",
+            "-i",
             configFile.InQuotes(),
             "-l",
             logFile.InQuotes(),
