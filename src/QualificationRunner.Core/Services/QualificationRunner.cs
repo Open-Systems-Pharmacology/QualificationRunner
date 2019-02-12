@@ -36,6 +36,9 @@ namespace QualificationRunner.Core.Services
       public async Task RunBatchAsync(QualificationRunOptions runOptions)
       {
          _runOptions = runOptions;
+
+         clearOutputFolder();
+
          dynamic qualificationPlan = await _jsonSerializer.Deserialize<dynamic>(runOptions.ConfigurationFile);
 
          IReadOnlyList<Project> projects = GetListFrom<Project>(qualificationPlan.Projects);
@@ -51,7 +54,7 @@ namespace QualificationRunner.Core.Services
          var projectConfigurations = projects.Select(p => createQualifcationConfigurationFor(p, projects, allPlots)).ToList();
 
          _logger.AddDebug("Copying static files");
-         await copyStaticFiles(qualificationPlan);
+         SaticFiles staticFiles =  await copyStaticFiles(qualificationPlan);
 
          _logger.AddDebug("Starting validation runs");
          var validations = await Task.WhenAll(projectConfigurations.Select(validateProject));
@@ -61,22 +64,22 @@ namespace QualificationRunner.Core.Services
             throw new QualificationRunnerException(invalidConfigurations);
 
          //Run all qualification projects
-//         _logger.AddDebug("Starting qualification runs");
-//         var runResults = await Task.WhenAll(projectConfigurations.Select(runQualification));
-//         var invalidRunResults = runResults.Where(x => !x.Success).ToList();
-//         if (invalidRunResults.Any())
-//            throw new QualificationRunnerException(invalidRunResults);
+         _logger.AddDebug("Starting qualification runs");
+         var runResults = await Task.WhenAll(projectConfigurations.Select(runQualification));
+         var invalidRunResults = runResults.Where(x => !x.Success).ToList();
+         if (invalidRunResults.Any())
+            throw new QualificationRunnerException(invalidRunResults);
 
-         //TODO replace with runResults
-         await createReportConfigurationPlan(validations, qualificationPlan);
+         await createReportConfigurationPlan(runResults, staticFiles, qualificationPlan);
 
          var end = DateTime.UtcNow;
          var timeSpent = end - begin;
          _logger.AddInfo($"Qualification scenario finished in {timeSpent.ToDisplay()}");
       }
 
-      private Task copyStaticFiles(dynamic qualificationPlan)
+      private Task<SaticFiles> copyStaticFiles(dynamic qualificationPlan)
       {
+         var staticFiles = new SaticFiles();
          //Sections
          var currentFolder = FileHelper.FolderFromFileFullPath(_runOptions.ConfigurationFile);
          var contentFolder = Path.Combine(currentFolder, CONTENT_FOLDER);
@@ -85,14 +88,15 @@ namespace QualificationRunner.Core.Services
             CopyDirectory(contentFolder, _runOptions.OutputFolder);
 
          //Observed Data
-         //Path is relative to input file and should be adapted 
-         IReadOnlyList<ObservedDataMapping> observedDataSets = GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
-         observedDataSets?.Each(copyObservedData);
+         IReadOnlyList<ObservedDataMapping> observedDataSets = getStaticObservedDataSetFrom(qualificationPlan);
+         staticFiles.ObservedDatSets = observedDataSets.Select(copyObservedData).ToArray();
 
-         return Task.CompletedTask;
+         return Task.FromResult(staticFiles);
       }
 
-      private void copyObservedData(ObservedDataMapping observedDataMapping)
+      private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
+
+      private ObservedDataMapping copyObservedData(ObservedDataMapping observedDataMapping)
       {
          var observedDataFilePath = Path.Combine(_runOptions.ConfigurationFile, observedDataMapping.Path);
          var fileInfo = new FileInfo(observedDataFilePath);
@@ -100,26 +104,40 @@ namespace QualificationRunner.Core.Services
             throw new QualificationRunnerException(ObservedDataFileNotFound(observedDataFilePath));
 
          DirectoryHelper.CreateDirectory(_runOptions.ObservedDataFolder);
-         fileInfo.CopyTo(Path.Combine(_runOptions.ObservedDataFolder, fileInfo.Name), overwrite: true);
+         var copiedObservedDataFilePath = Path.Combine(_runOptions.ObservedDataFolder, fileInfo.Name);
+         fileInfo.CopyTo(copiedObservedDataFilePath, overwrite: true);
+
+         return new ObservedDataMapping
+         {
+            Id = observedDataMapping.Id,
+            Type = observedDataMapping.Type,
+            Path = FileHelper.CreateRelativePath(copiedObservedDataFilePath, _runOptions.ReportConfigurationFile)
+         };
       }
 
-      private async Task createReportConfigurationPlan(QualificationRunResult[] runResults, dynamic qualificationPlan)
+      private async Task createReportConfigurationPlan(QualificationRunResult[] runResults, SaticFiles staticFiles, dynamic qualificationPlan)
       {
          dynamic reportConfigurationPlan = new JObject();
 
-         reportConfigurationPlan.Sections = qualificationPlan.Sections;
+         var mappings = await Task.WhenAll(runResults.Select(x => _jsonSerializer.Deserialize<QualificationMapping>(x.MappingFile)));
+
+         reportConfigurationPlan.SimulationMappings = toJArray(mappings.SelectMany(x => x.SimulationMappings));
+
+         reportConfigurationPlan.ObservededDataSets = toJArray(mappings.SelectMany(x => x.ObservedDataMappings).Union(staticFiles.ObservedDatSets));
+
          var plots = qualificationPlan.Plots;
          RemoveByName(plots, Configuration.ALL_PLOTS);
 
-         var mappings = await Task.WhenAll(runResults.Select(x => _jsonSerializer.Deserialize<QualificationMapping>(x.MappingFile)));
-         var timeProfiles = new JArray();
-
-         mappings.SelectMany(x => x.Plots).Each(p => { timeProfiles.Add(toJObject(p)); });
-
-         plots.TimeProfile = timeProfiles;
+         plots.TimeProfile = toJArray(mappings.SelectMany(x => x.Plots));
          reportConfigurationPlan.Plots = plots;
+
+         reportConfigurationPlan.Sections = qualificationPlan.Sections;
+
          await _jsonSerializer.Serialize(reportConfigurationPlan, _runOptions.ReportConfigurationFile);
       }
+
+
+      private JArray toJArray(IEnumerable<object> enumerable) => new JArray(enumerable.Select(toJObject));
 
       private JObject toJObject(object p) => _jsonSerializer.DeserializeFromString<dynamic>(_jsonSerializer.SerializeAsString(p));
 
@@ -148,16 +166,13 @@ namespace QualificationRunner.Core.Services
 
          var tmpProjectFolder = Path.Combine(tmpFolder, projectId);
 
-//         if (DirectoryHelper.DirectoryExists(tmpProjectFolder))
-//            DirectoryHelper.DeleteDirectory(tmpProjectFolder, true);
-
          DirectoryHelper.CreateDirectory(tmpProjectFolder);
 
          return new QualifcationConfiguration
          {
             ProjectId = projectId,
             OutputFolder = _runOptions.OutputFolder,
-            ReportConfigurationFile = _runOptions.ConfigurationFile,
+            ReportConfigurationFile = _runOptions.ReportConfigurationFile,
             ObservedDataFolder = _runOptions.ObservedDataFolder,
             MappingFile = Path.Combine(tmpProjectFolder, "mapping.json"),
             SnapshotFile = snapshotFileFor(project),
@@ -206,18 +221,29 @@ namespace QualificationRunner.Core.Services
          return GetListFrom<Plot>(plots.AllPlots);
       }
 
-//      public dynamic ByName(ExpandoObject obj, string propertyName)
-//      {
-//         if (obj == null)
-//            return null;
-//
-//         var byName = (IDictionary<string, object>) obj;
-//         if (byName.ContainsKey(propertyName))
-//            return byName[propertyName];
-//
-//         return null;
-//      }
-//
+
+      private void clearOutputFolder()
+      {
+         if (!DirectoryHelper.DirectoryExists(_runOptions.OutputFolder))
+            return;
+
+         var files = Directory.GetFiles(_runOptions.OutputFolder, "*.*", SearchOption.AllDirectories ).Where(x => !string.Equals(x, _runOptions.LogFile)).ToList();
+         if (files.Count == 0)
+            return;
+
+         if(!_runOptions.ForceDelete)
+            throw new QualificationRunnerException(OutputFolderIsNotEmpty);
+
+         try
+         {
+            DirectoryHelper.DeleteDirectory(_runOptions.OutputFolder, true);
+         }
+         catch 
+         {
+            //Ensure that we do not not throw an exception if one file cannot be deleted
+         }
+      }
+
       public void RemoveByName(JObject obj, string propertyName)
       {
          var prop = obj?[propertyName];
@@ -244,6 +270,7 @@ namespace QualificationRunner.Core.Services
          return list;
       }
 
+     
       public static void CopyDirectory(string source, string target, bool createRootDirectory = true)
       {
          CopyDirectory(new DirectoryInfo(source), new DirectoryInfo(target), createRootDirectory);

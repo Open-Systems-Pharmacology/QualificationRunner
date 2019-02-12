@@ -33,14 +33,11 @@ namespace QualificationRunner.Core
 
       public string PKSimInstallFolderPath => getRegistryValueForRegistryPathAndKey(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
 
-
       private string getRegistryValueForRegistryPathAndKey(string openSystemsPharmacology, string installDir)
       {
          try
          {
-            //TODO
-            return @"C:\projects\PK-Sim\src\PKSim.CLI\bin\Debug";
-            return (string)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{MajorVersion}", installDir, null);
+            return (string) Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{MajorVersion}", installDir, null);
          }
          catch (Exception)
          {

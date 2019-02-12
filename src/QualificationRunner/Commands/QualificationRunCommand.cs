@@ -31,7 +31,7 @@ namespace QualificationRunner.Commands
             ForceDelete = ForceDelete,
             ReportConfigurationFileName = ReportConfigurationFileName,
             LogLevel = LogLevel,
-            LogFile = LogFileFullPath
+            LogFile = LogFileFullPath,
          };
       }
 

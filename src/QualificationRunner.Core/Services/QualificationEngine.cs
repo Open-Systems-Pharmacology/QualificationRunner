@@ -78,7 +78,6 @@ namespace QualificationRunner.Core.Services
 
          var logFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
-
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,

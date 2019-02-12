@@ -12,6 +12,7 @@ namespace QualificationRunner.Core.Assets
    {
       public static string NodeNotDefinedInQualificationFile(string node) => $"{node} node not defined in qualification file";
       public static string ProjectsNotDefinedInQualificationFile = NodeNotDefinedInQualificationFile(Configuration.PROJECTS);
+      public static string OutputFolderIsNotEmpty = "Output folder is not empty. Please use -f to force deletion. Beware: All files in the output folder will be deleted!";
 
       public static string ReferencedProjectNotDefinedInQualificationFile(string project) => $"Referenced project '{project}' is not defined in qualification file";
 
