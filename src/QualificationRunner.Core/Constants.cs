@@ -13,6 +13,7 @@ namespace QualificationRunner.Core
       public const string DEFAULT_REPORT_CONFIGURATION_PLAN_NAME = "report-configuration-plan";
       public const string CONTENT_FOLDER = "Content";
       public const string OBSERVED_DATA_FOLDER = "ObservedData";
+      public const string INPUTS_FOLDER = "Inputs";
 
       public static class Tools
       {

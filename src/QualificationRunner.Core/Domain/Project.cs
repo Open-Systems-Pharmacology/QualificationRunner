@@ -1,4 +1,5 @@
 ﻿using OSPSuite.Core.Domain;
+using OSPSuite.Core.Qualification;
 
 namespace QualificationRunner.Core.Domain
 {
@@ -6,6 +7,6 @@ namespace QualificationRunner.Core.Domain
    {
       public string Id { get; set; }
       public string Path { get; set; }
-      public BuildingBlock[] BuildingBlocks { get; set; }
+      public BuildingBlockRef[] BuildingBlocks { get; set; }
    }
 }
