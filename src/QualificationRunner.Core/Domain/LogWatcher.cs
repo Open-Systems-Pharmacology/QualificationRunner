@@ -115,10 +115,10 @@ namespace QualificationRunner.Core.Domain
             if (entry.StartsWith("Information:"))
                return (entry.Replace("Information: ", ""), LogLevel.Information);
 
-            if (entry.StartsWith("Error"))
+            if (entry.StartsWith("Error:"))
                return (entry.Replace("Error: ", ""), LogLevel.Error);
 
-            if (entry.StartsWith("Warning"))
+            if (entry.StartsWith("Warning:"))
                return (entry.Replace("Warning: ", ""), LogLevel.Warning);
 
             return (entry, LogLevel.Information);
