@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using FluentNHibernate.Utils;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Utility;
+using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.Services;
 using ILogger = OSPSuite.Core.Services.ILogger;
 
@@ -115,11 +115,11 @@ namespace QualificationRunner.Core.Domain
             if (entry.StartsWith("Information:"))
                return (entry.Replace("Information: ", ""), LogLevel.Information);
 
-            if (entry.StartsWith("Err"))
-               return (entry.Replace("Information: ", ""), LogLevel.Error);
+            if (entry.StartsWith("Error"))
+               return (entry.Replace("Error: ", ""), LogLevel.Error);
 
-            if (entry.StartsWith("Warn"))
-               return (entry.Replace("Information: ", ""), LogLevel.Warning);
+            if (entry.StartsWith("Warning"))
+               return (entry.Replace("Warning: ", ""), LogLevel.Warning);
 
             return (entry, LogLevel.Information);
          }
