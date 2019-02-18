@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using FluentNHibernate.Utils;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Utility;
+using QualificationRunner.Core.Services;
 using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner.Core.Domain
@@ -18,26 +18,20 @@ namespace QualificationRunner.Core.Domain
 
       public class LogWatcher : ILogWatcher
       {
-         private readonly string _logFile;
          private readonly ILogger _logger;
+         private readonly LogWatcherOptions _logWatcherOptions;
          private bool _disposed;
-         private readonly string[] _foldersToWatch;
          private readonly List<FileSystemWatcher> _fileSystemWatchers;
          private StreamReader _sr;
          private FileSystemWatcher _logFileWatcher;
 
-         /// <summary>
-         ///    Creates a log file watcher that will update the <paramref name="logger" /> when either the
-         ///    <paramref name="logFile" /> changes
-         ///    or when one of the <paramref name="additionalFoldersToWatch" /> changes
-         /// </summary>
-         public LogWatcher(string logFile, ILogger logger, params string[] additionalFoldersToWatch)
+
+         public LogWatcher(ILogger logger, LogWatcherOptions logWatcherOptions)
          {
-            _logFile = logFile;
-            _foldersToWatch = additionalFoldersToWatch;
             _logger = logger;
+            _logWatcherOptions = logWatcherOptions;
             _fileSystemWatchers = new List<FileSystemWatcher>();
-            configureFileSystemWatcher(logFile);
+            configureFileSystemWatcher(_logWatcherOptions.LogFile);
 
             subscribe();
          }
@@ -45,7 +39,7 @@ namespace QualificationRunner.Core.Domain
          private void configureFileSystemWatcher(string logFile)
          {
             var folderFromFileFullPath = FileHelper.FolderFromFileFullPath(logFile);
-            var fileNameEndExtension = Path.GetFileName(_logFile);
+            var fileNameEndExtension = Path.GetFileName(_logWatcherOptions.LogFile);
 
             FileHelper.DeleteFile(logFile);
 
@@ -56,7 +50,7 @@ namespace QualificationRunner.Core.Domain
 
             _fileSystemWatchers.Add(_logFileWatcher);
 
-            _foldersToWatch.Each(folder => { _fileSystemWatchers.Add(new FileSystemWatcher(folder, "*.json")); });
+            _logWatcherOptions.AdditionalFoldersToWatch.Each(folder => { _fileSystemWatchers.Add(new FileSystemWatcher(folder, _logWatcherOptions.AdditionalFilesExtension)); });
          }
 
          private void forAllWatchers(Action<FileSystemWatcher> actionForFileSystemWatcher)
@@ -78,7 +72,7 @@ namespace QualificationRunner.Core.Domain
 
          private void onCreated(object sender, FileSystemEventArgs e)
          {
-            var logFileStream = new FileStream(_logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var logFileStream = new FileStream(_logWatcherOptions.LogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             _sr = new StreamReader(logFileStream);
 
             appendTextToLog();
@@ -102,7 +96,32 @@ namespace QualificationRunner.Core.Domain
 
          private void appendTextToLog()
          {
-            _logger.AddToLog(readFileText(), LogLevel.Debug, null);
+            var entries = readFileText()?.Split('\n');
+            entries.Each(s =>
+            {
+               var (entry, level) = logLevelFor(s);
+               _logger.AddToLog(entry, level, _logWatcherOptions.Category);
+            });
+         }
+
+         private (string, LogLevel) logLevelFor(string entry)
+         {
+            if (string.IsNullOrEmpty(entry))
+               return (entry, LogLevel.Debug);
+
+            if (entry.StartsWith("Debug:"))
+               return (entry.Replace("Debug: ", ""), LogLevel.Debug);
+
+            if (entry.StartsWith("Information:"))
+               return (entry.Replace("Information: ", ""), LogLevel.Information);
+
+            if (entry.StartsWith("Err"))
+               return (entry.Replace("Information: ", ""), LogLevel.Error);
+
+            if (entry.StartsWith("Warn"))
+               return (entry.Replace("Information: ", ""), LogLevel.Warning);
+
+            return (entry, LogLevel.Information);
          }
 
          public virtual void Watch()
