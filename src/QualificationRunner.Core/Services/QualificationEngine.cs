@@ -27,7 +27,7 @@ namespace QualificationRunner.Core.Services
       public string ConfigFile { get; set; }
 
       /// <summary>
-      /// Name of the mapping file created as a result of the qualification run
+      ///    Name of the mapping file created as a result of the qualification run
       /// </summary>
       public string MappingFile { get; set; }
 
@@ -78,27 +78,28 @@ namespace QualificationRunner.Core.Services
 
          var logFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
+         var projectId = qualifcationConfiguration.ProjectId;
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,
             LogFile = logFile,
-            ProjectId = qualifcationConfiguration.ProjectId,
+            ProjectId = projectId,
             MappingFile = qualifcationConfiguration.MappingFile
          };
 
          await _jsonSerializer.Serialize(qualifcationConfiguration, configFile);
 
-         _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(qualifcationConfiguration.ProjectId, configFile));
+         _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(projectId, configFile));
 
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, cancellationToken);
+            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, projectId, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
       }
 
-      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, CancellationToken cancellationToken)
+      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, string projectId, CancellationToken cancellationToken)
       {
          var args = new List<string>
          {
@@ -114,14 +115,19 @@ namespace QualificationRunner.Core.Services
          if (validate)
             args.Add("-v");
 
+         var logWatcherOptions = new LogWatcherOptions
+         {
+            LogFile = logFile,
+            Category = projectId,
+         };
          using (var process = _startableProcessFactory.CreateStartableProcess(_applicationConfiguration.PKSimCLIPath, args.ToArray()))
-         using (var watcher = _logWatcherFactory.CreateLogWatcher(logFile, new List<string>().ToArray()))
+         using (var watcher = _logWatcherFactory.CreateLogWatcher(logWatcherOptions))
          {
             watcher.Watch();
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.Start();
             process.Wait(cancellationToken);
-            return (ExitCodes) process.ReturnCode;
+            return (ExitCodes)process.ReturnCode;
          }
       }
 
