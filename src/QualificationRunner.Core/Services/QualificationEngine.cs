@@ -74,11 +74,11 @@ namespace QualificationRunner.Core.Services
 
       private async Task<QualificationRunResult> execute(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken, bool validate)
       {
-         _logger.AddDebug(Logs.StartingQualificationRunForProject(qualifcationConfiguration.ProjectId));
+         _logger.AddDebug(Logs.StartingQualificationRunForProject(qualifcationConfiguration.Project));
 
          var logFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
-         var projectId = qualifcationConfiguration.ProjectId;
+         var projectId = qualifcationConfiguration.Project;
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,

@@ -171,7 +171,7 @@ namespace QualificationRunner.Core.Services
 
          return new QualifcationConfiguration
          {
-            ProjectId = projectId,
+            Project = projectId,
             OutputFolder = _runOptions.OutputFolder,
             ReportConfigurationFile = _runOptions.ReportConfigurationFile,
             ObservedDataFolder = _runOptions.ObservedDataFolder,
@@ -192,9 +192,9 @@ namespace QualificationRunner.Core.Services
 
       private BuildingBlockSwap mapBuildingBlock(BuildingBlockRef buildingBlock, IReadOnlyList<Project> projects)
       {
-         var project = projects.FindById(buildingBlock.RefProject);
+         var project = projects.FindById(buildingBlock.Project);
          if (project == null)
-            throw new QualificationRunnerException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.RefProject));
+            throw new QualificationRunnerException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
 
          return new BuildingBlockSwap
          {
