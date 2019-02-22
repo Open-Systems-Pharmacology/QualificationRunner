@@ -14,7 +14,7 @@ using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner.Core.Services
 {
-   public class QualificationRunResult
+   public class QualificationRunResult : IReferencingProject
    {
       /// <summary>
       ///    Path of the log file associated with the run
@@ -36,7 +36,7 @@ namespace QualificationRunner.Core.Services
       /// </summary>
       public bool Success { get; set; }
 
-      public string ProjectId { get; set; }
+      public string Project { get; set; }
    }
 
    public interface IQualificationEngine : IDisposable
@@ -78,22 +78,22 @@ namespace QualificationRunner.Core.Services
 
          var logFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
-         var projectId = qualifcationConfiguration.Project;
+         var project = qualifcationConfiguration.Project;
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,
             LogFile = logFile,
-            ProjectId = projectId,
+            Project = project,
             MappingFile = qualifcationConfiguration.MappingFile
          };
 
          await _jsonSerializer.Serialize(qualifcationConfiguration, configFile);
 
-         _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(projectId, configFile));
+         _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(project, configFile));
 
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, projectId, cancellationToken);
+            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, project, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
@@ -127,7 +127,7 @@ namespace QualificationRunner.Core.Services
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.Start();
             process.Wait(cancellationToken);
-            return (ExitCodes)process.ReturnCode;
+            return (ExitCodes) process.ReturnCode;
          }
       }
 
