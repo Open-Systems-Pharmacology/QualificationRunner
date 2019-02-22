@@ -17,8 +17,8 @@ namespace OSPSuite.Core.Qualification
 
    public static class QualificationExtensions
    {
-      public static T[] ForProject<T>(this IEnumerable<T> referencingProject, string projectId) where T : IReferencingProject =>
-         referencingProject?.Where(x => string.Equals(x.Project, projectId)).ToArray();
+      public static T[] ForProject<T>(this IEnumerable<T> referencingProject, string projectName) where T : IReferencingProject =>
+         referencingProject?.Where(x => string.Equals(x.Project, projectName)).ToArray();
    }
 
    public class BuildingBlockSwap : IWithName
