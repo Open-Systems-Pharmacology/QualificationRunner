@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using CommandLine;
+using OSPSuite.Utility;
 using QualificationRunner.Core;
 using QualificationRunner.Core.RunOptions;
 
@@ -27,6 +28,7 @@ namespace QualificationRunner.Commands
          return new QualificationRunOptions
          {
             ConfigurationFile = ConfigurationFile,
+            ConfigurationFolder = FileHelper.FolderFromFileFullPath(ConfigurationFile),
             OutputFolder = OutputFolder,
             ForceDelete = ForceDelete,
             ReportConfigurationFileName = ReportConfigurationFileName,
