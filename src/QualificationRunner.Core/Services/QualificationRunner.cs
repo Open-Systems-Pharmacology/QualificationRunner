@@ -81,8 +81,7 @@ namespace QualificationRunner.Core.Services
       {
          var staticFiles = new SaticFiles();
          //Sections
-         var currentFolder = FileHelper.FolderFromFileFullPath(_runOptions.ConfigurationFile);
-         var contentFolder = Path.Combine(currentFolder, CONTENT_FOLDER);
+         var contentFolder = Path.Combine(_runOptions.ConfigurationFolder, CONTENT_FOLDER);
 
          if (DirectoryHelper.DirectoryExists(contentFolder))
             FileHelper.CopyDirectory(contentFolder, _runOptions.OutputFolder);
@@ -98,21 +97,33 @@ namespace QualificationRunner.Core.Services
 
       private ObservedDataMapping copyObservedData(ObservedDataMapping observedDataMapping)
       {
-         var observedDataFilePath = Path.Combine(_runOptions.ConfigurationFile, observedDataMapping.Path);
+         var observedDataFilePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
          var fileInfo = new FileInfo(observedDataFilePath);
          if (!fileInfo.Exists)
             throw new QualificationRunnerException(ObservedDataFileNotFound(observedDataFilePath));
 
          DirectoryHelper.CreateDirectory(_runOptions.ObservedDataFolder);
-         var copiedObservedDataFilePath = Path.Combine(_runOptions.ObservedDataFolder, fileInfo.Name);
+         var copiedObservedDataFilePath = absolutePathFrom(_runOptions.ObservedDataFolder, fileInfo.Name);
          fileInfo.CopyTo(copiedObservedDataFilePath, overwrite: true);
 
          return new ObservedDataMapping
          {
             Id = observedDataMapping.Id,
             Type = observedDataMapping.Type,
-            Path = FileHelper.CreateRelativePath(copiedObservedDataFilePath, _runOptions.ReportConfigurationFile, useUnixPathSeparator:true)
+            Path = pathRelativeToOutputFolder(copiedObservedDataFilePath)
          };
+      }
+
+
+      private string pathRelativeToOutputFolder(string fullPath) => FileHelper.CreateRelativePath(fullPath, _runOptions.OutputFolder, useUnixPathSeparator: true);
+
+      private string absolutePathFrom(string relatedTo, string relativePath)
+      {
+         var sanitizeRelativePath = relativePath;
+         if(sanitizeRelativePath.StartsWith(Path.DirectorySeparatorChar.ToString()) || sanitizeRelativePath.StartsWith(Path.AltDirectorySeparatorChar.ToString()))
+            sanitizeRelativePath= sanitizeRelativePath.Substring(1);
+
+         return Path.Combine(relatedTo, sanitizeRelativePath);
       }
 
       private async Task createReportConfigurationPlan(QualificationRunResult[] runResults, SaticFiles staticFiles, dynamic qualificationPlan)
@@ -185,7 +196,7 @@ namespace QualificationRunner.Core.Services
          };
       }
 
-      private string snapshotFileFor(Project project) => Path.Combine(_runOptions.ConfigurationFile, project.Path);
+      private string snapshotFileFor(Project project) => absolutePathFrom(_runOptions.ConfigurationFolder, project.Path);
 
       private BuildingBlockSwap[] mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects) => 
          buildingBlocks?.Select(bb => mapBuildingBlock(bb, projects)).ToArray();
