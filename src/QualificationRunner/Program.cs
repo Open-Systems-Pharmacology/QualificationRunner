@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using CommandLine;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core.Extensions;
@@ -20,7 +19,6 @@ namespace QualificationRunner
 
       static int Main(string[] args)
       {
-
          ApplicationStartup.Initialize();
 
          Parser.Default.ParseArguments<QualificationRunCommand>(args)
@@ -32,7 +30,6 @@ namespace QualificationRunner
             return (int) ExitCodes.Error;
 
          return (int) ExitCodes.Success;
-
       }
 
       private static void startCommand<TRunOptions>(CLICommand<TRunOptions> command)
@@ -52,7 +49,6 @@ namespace QualificationRunner
             logger.AddError($"{command.Name} run failed");
             _valid = false;
          }
-
       }
 
       private static ILogger initializeLogger(CLICommand runCommand)
