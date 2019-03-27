@@ -134,7 +134,7 @@ namespace QualificationRunner.Core.Services
 
          reportConfigurationPlan.SimulationMappings = toJArray(mappings.SelectMany(x => x.SimulationMappings));
 
-         reportConfigurationPlan.ObservededDataSets = toJArray(mappings.SelectMany(x => x.ObservedDataMappings).Union(staticFiles.ObservedDatSets));
+         reportConfigurationPlan.ObservedDataSets = toJArray(mappings.SelectMany(x => x.ObservedDataMappings).Union(staticFiles.ObservedDatSets));
          
          var plots = qualificationPlan.Plots;
          RemoveByName(plots, Configuration.ALL_PLOTS);
