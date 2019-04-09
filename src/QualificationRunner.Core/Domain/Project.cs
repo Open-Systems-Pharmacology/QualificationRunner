@@ -8,5 +8,6 @@ namespace QualificationRunner.Core.Domain
       public string Id { get; set; }
       public string Path { get; set; }
       public BuildingBlockRef[] BuildingBlocks { get; set; }
+      public SimulationParameterRef[] SimulationParameters { get; set; }
    }
 }

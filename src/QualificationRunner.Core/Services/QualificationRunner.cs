@@ -191,6 +191,7 @@ namespace QualificationRunner.Core.Services
             SnapshotFile = snapshotFileFor(project),
             TempFolder = tmpProjectFolder,
             BuildingBlocks = mapBuildingBlocks(project.BuildingBlocks, projects),
+            SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
             SimulationPlots = allPlots.ForProject(projectId),
             Inputs = alInputs.ForProject(projectId)
          };
@@ -211,6 +212,25 @@ namespace QualificationRunner.Core.Services
          {
             Name = buildingBlock.Name,
             Type = buildingBlock.Type,
+            SnapshotFile = snapshotFileFor(project)
+         };
+      }
+
+      private SimulationParameterSwap[] mapSimulationParameters(SimulationParameterRef[] simulationParameters, IReadOnlyList<Project> projects) =>
+         simulationParameters?.Select(x => mapSimulationParameter(x, projects)).ToArray();
+
+
+      private SimulationParameterSwap mapSimulationParameter(SimulationParameterRef simulationParameter, IReadOnlyList<Project> projects)
+      {
+         var project = projects.FindById(simulationParameter.Project);
+         if (project == null)
+            throw new QualificationRunnerException(ReferencedProjectNotDefinedInQualificationFile(simulationParameter.Project));
+
+         return new SimulationParameterSwap
+         {
+            Simulation = simulationParameter.Simulation,
+            ParameterPath = simulationParameter.Path,
+            TargetSimulations = simulationParameter.TargetSimulations,
             SnapshotFile = snapshotFileFor(project)
          };
       }
