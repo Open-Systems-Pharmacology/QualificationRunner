@@ -46,7 +46,7 @@ namespace OSPSuite.Core.Qualification
    {
       public string SnapshotFile { get; set; }
       public string Simulation { get; set; }
-      public string ParameterPath { get; set; }
+      public string Path { get; set; }
       public string[] TargetSimulations { get; set; }
    }
 

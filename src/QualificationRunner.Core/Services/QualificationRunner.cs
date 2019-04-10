@@ -229,7 +229,7 @@ namespace QualificationRunner.Core.Services
          return new SimulationParameterSwap
          {
             Simulation = simulationParameter.Simulation,
-            ParameterPath = simulationParameter.Path,
+            Path = simulationParameter.Path,
             TargetSimulations = simulationParameter.TargetSimulations,
             SnapshotFile = snapshotFileFor(project)
          };
