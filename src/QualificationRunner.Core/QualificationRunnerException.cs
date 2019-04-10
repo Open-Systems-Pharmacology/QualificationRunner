@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using OSPSuite.Core.Qualification;
 using OSPSuite.Utility.Exceptions;
 using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.Assets;
@@ -9,7 +10,7 @@ using QualificationRunner.Core.Services;
 
 namespace QualificationRunner.Core
 {
-   public class QualificationRunnerException : OSPSuiteException
+   public class QualificationRunnerException : QualificationRunException
    {
       public QualificationRunnerException()
       {
@@ -20,10 +21,6 @@ namespace QualificationRunner.Core
       }
 
       public QualificationRunnerException(string message, Exception innerException) : base(message, innerException)
-      {
-      }
-
-      protected QualificationRunnerException(SerializationInfo info, StreamingContext context) : base(info, context)
       {
       }
 

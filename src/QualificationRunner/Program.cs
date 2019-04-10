@@ -45,7 +45,7 @@ namespace QualificationRunner
          }
          catch (Exception e)
          {
-            logger.AddError(e.ExceptionMessage());
+            logger.AddException(e);
             logger.AddError($"{command.Name} run failed");
             _valid = false;
          }
