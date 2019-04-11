@@ -14,13 +14,13 @@ namespace QualificationRunner.Commands
       [Option('i', "input", Required = true, HelpText = "Json configuration input file used to start the qualification workflow.")]
       public string ConfigurationFile { get; set; }
 
-      [Option('o', "output", Required = true, HelpText = "Output folder where the qualifaction workflow files will be created.")]
+      [Option('o', "output", Required = true, HelpText = "Output folder where the qualification workflow files will be created.")]
       public string OutputFolder { get; set; }
 
-      [Option('f', "force", Required = false, HelpText = "Set to true, the output folder will be deleted, even if it not empty. Default is false")]
+      [Option('f', "force", Required = false, HelpText = "Optional. Set to true, the output folder will be deleted, even if it not empty. Default is false")]
       public bool ForceDelete { get; set; }
 
-      [Option('n', "name", Required = false, HelpText = "Name of the report qualification plan to be generated")]
+      [Option('n', "name", Required = false, HelpText = "Optional. Name of the report qualification plan to be generated")]
       public string ReportConfigurationFileName { get; set; } = Constants.DEFAULT_REPORT_CONFIGURATION_PLAN_NAME;
 
       public override QualificationRunOptions ToRunOptions()
