@@ -23,6 +23,9 @@ namespace QualificationRunner.Commands
       [Option('n', "name", Required = false, HelpText = "Optional. Name of the report qualification plan to be generated")]
       public string ReportConfigurationFileName { get; set; } = Constants.DEFAULT_REPORT_CONFIGURATION_PLAN_NAME;
 
+      [Option('p', "pksim", Required = false, HelpText = "Optional. Path of PK-Sim installation folder. If not specified, installation path will be read from registry (e.g required full install of PK-Sim via setup)")]
+      public string PKSimInstallationFolder { get; set; } 
+
       public override QualificationRunOptions ToRunOptions()
       {
          return new QualificationRunOptions
@@ -32,6 +35,7 @@ namespace QualificationRunner.Commands
             OutputFolder = OutputFolder,
             ForceDelete = ForceDelete,
             ReportConfigurationFileName = ReportConfigurationFileName,
+            PKSimInstallationFolder = PKSimInstallationFolder,
             LogLevel = LogLevel,
             LogFile = LogFileFullPath,
          };
