@@ -10,6 +10,8 @@ using OSPSuite.Core.Extensions;
 using OSPSuite.Core.Qualification;
 using OSPSuite.Core.Services;
 using OSPSuite.Utility;
+using OSPSuite.Utility.Extensions;
+using QualificationRunner.Core.Assets;
 using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
@@ -43,7 +45,7 @@ namespace QualificationRunner.Core.Services
          IReadOnlyList<Project> projects = GetListFrom<Project>(qualificationPlan.Projects);
 
          if (projects == null)
-            throw new QualificationRunnerException(ProjectsNotDefinedInQualificationFile);
+            throw new QualificationRunException(ProjectsNotDefinedInQualificationFile);
 
          IReadOnlyList<SimulationPlot> allPlots = retrieveProjectPlots(qualificationPlan);
          IReadOnlyList<Input> allInputs = retrieveInputs(qualificationPlan);
@@ -61,14 +63,14 @@ namespace QualificationRunner.Core.Services
 
          var invalidConfigurations = validations.Where(x => !x.Success).ToList();
          if (invalidConfigurations.Any())
-            throw new QualificationRunnerException(invalidConfigurations);
+            throw new QualificationRunException(errorMessageFrom(invalidConfigurations));
 
          //Run all qualification projects
          _logger.AddDebug("Starting qualification runs");
          var runResults = await Task.WhenAll(projectConfigurations.Select(runQualification));
          var invalidRunResults = runResults.Where(x => !x.Success).ToList();
          if (invalidRunResults.Any())
-            throw new QualificationRunnerException(invalidRunResults);
+            throw new QualificationRunException(errorMessageFrom(invalidRunResults));
 
          await createReportConfigurationPlan(runResults, staticFiles, qualificationPlan);
 
@@ -95,12 +97,14 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
 
+      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => Errors.ProjectConfigurationNotValid(x.Project, x.LogFile)).ToString("\n");
+
       private ObservedDataMapping copyObservedData(ObservedDataMapping observedDataMapping)
       {
          var observedDataFilePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
          var fileInfo = new FileInfo(observedDataFilePath);
          if (!fileInfo.Exists)
-            throw new QualificationRunnerException(ObservedDataFileNotFound(observedDataFilePath));
+            throw new QualificationRunException(ObservedDataFileNotFound(observedDataFilePath));
 
          DirectoryHelper.CreateDirectory(_runOptions.ObservedDataFolder);
          var copiedObservedDataFilePath = absolutePathFrom(_runOptions.ObservedDataFolder, fileInfo.Name);
@@ -206,7 +210,7 @@ namespace QualificationRunner.Core.Services
       {
          var project = projects.FindById(buildingBlock.Project);
          if (project == null)
-            throw new QualificationRunnerException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
+            throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
 
          return new BuildingBlockSwap
          {
@@ -224,7 +228,7 @@ namespace QualificationRunner.Core.Services
       {
          var project = projects.FindById(simulationParameter.Project);
          if (project == null)
-            throw new QualificationRunnerException(ReferencedProjectNotDefinedInQualificationFile(simulationParameter.Project));
+            throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(simulationParameter.Project));
 
          return new SimulationParameterSwap
          {
@@ -251,7 +255,7 @@ namespace QualificationRunner.Core.Services
             return;
 
          if (!_runOptions.ForceDelete)
-            throw new QualificationRunnerException(OutputFolderIsNotEmpty);
+            throw new QualificationRunException(OutputFolderIsNotEmpty);
 
          try
          {

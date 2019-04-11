@@ -166,7 +166,6 @@
     <Compile Include="Domain\Project.cs" />
     <Compile Include="Domain\SaticFiles.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="QualificationRunnerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QualificationRunnerConfiguration.cs" />
     <Compile Include="QualificationRunnerRegister.cs" />

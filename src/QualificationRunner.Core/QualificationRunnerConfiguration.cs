@@ -4,13 +4,15 @@ using Microsoft.Win32;
 using OSPSuite.Assets;
 using OSPSuite.Core;
 using OSPSuite.Core.Domain;
+using OSPSuite.Core.Qualification;
 using OSPSuite.Infrastructure.Configuration;
+using QualificationRunner.Core.Assets;
 
 namespace QualificationRunner.Core
 {
    public interface IQualificationRunnerConfiguration : IApplicationConfiguration
    {
-      string PKSimCLIPath { get; }
+      string PKSimCLIPathFor(string pksimInstallationFolder);
    }
 
    public class QualificationRunnerConfiguration : OSPSuiteConfiguration, IQualificationRunnerConfiguration
@@ -29,9 +31,20 @@ namespace QualificationRunner.Core
       public override string WatermarkOptionLocation { get; } = "Options -> Settings -> Application";
       public override string ApplicationFolderPathName { get; } = Constants.APPLICATION_FOLDER_PATH;
 
-      public string PKSimCLIPath => Path.Combine(PKSimInstallFolderPath, Constants.Tools.PKSIM_CLI);
+      public string PKSimCLIPathFor(string pksimInstallationFolder)
+      {
+         return getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
+      }
 
-      public string PKSimInstallFolderPath => getRegistryValueForRegistryPathAndKey(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+      private string retrievePKSimInstallFolderPathFromRegistry() => getRegistryValueForRegistryPathAndKey(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+
+      private string getPKSimCLIPathFor(string pksimInstallationFolder)
+      {
+         if (string.IsNullOrEmpty(pksimInstallationFolder))
+            throw new QualificationRunException(Errors.PKSimInstallationFolderNotFound);
+
+         return Path.Combine(pksimInstallationFolder, Constants.Tools.PKSIM_CLI);
+      }
 
       private string getRegistryValueForRegistryPathAndKey(string openSystemsPharmacology, string installDir)
       {

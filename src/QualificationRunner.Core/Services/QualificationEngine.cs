@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core.Qualification;
 using OSPSuite.Core.Services;
+using OSPSuite.Utility;
 using QualificationRunner.Core.Assets;
 using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
@@ -91,15 +92,20 @@ namespace QualificationRunner.Core.Services
 
          _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(project, configFile));
 
+         var pksimCLIPath = _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder);
+
+         if(!FileHelper.FileExists(pksimCLIPath))
+            throw new QualificationRunException(Errors.PKSimCLIFileNotFound(pksimCLIPath));
+
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, project, cancellationToken);
+            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, project, pksimCLIPath, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
       }
 
-      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, string projectId, CancellationToken cancellationToken)
+      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, string projectId, string pksimCLIPath, CancellationToken cancellationToken)
       {
          var args = new List<string>
          {
@@ -120,7 +126,7 @@ namespace QualificationRunner.Core.Services
             LogFile = logFile,
             Category = projectId,
          };
-         using (var process = _startableProcessFactory.CreateStartableProcess(_applicationConfiguration.PKSimCLIPath, args.ToArray()))
+         using (var process = _startableProcessFactory.CreateStartableProcess(pksimCLIPath, args.ToArray()))
          using (var watcher = _logWatcherFactory.CreateLogWatcher(logWatcherOptions))
          {
             watcher.Watch();
