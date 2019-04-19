@@ -85,18 +85,20 @@ namespace QualificationRunner.Core.Services
 
       private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
 
-      private async Task<string> downloadRemoteFile(string url, string fileName, string subFolder, string id, string type)
+      private async Task<string> downloadRemoteFile(string url, string subFolder, string id, string type)
       {
          _logger.AddDebug($"Downloading {type.ToLower()} file for {id}...");
          var downloadFolder = Path.Combine(_runOptions.TempFolder, subFolder);
          DirectoryHelper.CreateDirectory(downloadFolder);
 
-         var fileFullPath = Path.Combine(downloadFolder, fileName);
-
+         
          using (var wc = new WebClient())
          {
             try
             {
+               var fileName = new Uri(url).Segments.Last();
+               var fileFullPath = Path.Combine(downloadFolder, fileName);
+
                await wc.DownloadFileTaskAsync(url, fileFullPath);
                _logger.AddDebug($"{type} file for {id} downloaded to ${fileFullPath}");
                return fileFullPath;
@@ -112,14 +114,14 @@ namespace QualificationRunner.Core.Services
 
       private async Task updateProjectFullPath(Project project)
       {
-         Task<string> downloadRemoteProject() => downloadRemoteFile(project.Path, $"{project.Id}{Filter.JSON_EXTENSION}", PROJECT_DOWNLOAD_FOLDER, project.Id, "Project");
+         Task<string> downloadRemoteProject() => downloadRemoteFile(project.Path, PROJECT_DOWNLOAD_FOLDER, project.Id, "Project");
 
          var projectAbsolutePath = snapshotFileFor(project);
 
-         if (!isLocalFileAndExists(projectAbsolutePath))
+         if (!localFileExists(projectAbsolutePath))
             projectAbsolutePath = await downloadRemoteProject();
 
-         if (!isLocalFileAndExists(projectAbsolutePath))
+         if (!localFileExists(projectAbsolutePath))
             throw new QualificationRunException(SnapshotFileNotFound(projectAbsolutePath));
 
          project.SnapshotFilePath = projectAbsolutePath;
@@ -147,14 +149,14 @@ namespace QualificationRunner.Core.Services
 
       private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {
-         Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, $"{observedDataMapping.Id}{Filter.CSV_EXTENSION}", OBSERVED_DATA_DOWNLOAD_FOLDER, observedDataMapping.Id, "Observed Data");
+         Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, OBSERVED_DATA_DOWNLOAD_FOLDER, observedDataMapping.Id, "Observed Data");
 
          var observedDataAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
          
-         if (!isLocalFileAndExists(observedDataAbsolutePath))
+         if (!localFileExists(observedDataAbsolutePath))
             observedDataAbsolutePath = await downloadRemoteObservedData();
 
-         if (!isLocalFileAndExists(observedDataAbsolutePath))
+         if (!localFileExists(observedDataAbsolutePath))
             throw new QualificationRunException(ObservedDataFileNotFound(observedDataAbsolutePath));
 
          var fileInfo = new FileInfo(observedDataAbsolutePath);
@@ -171,7 +173,7 @@ namespace QualificationRunner.Core.Services
          };
       }
 
-      private static bool isLocalFileAndExists(string file)
+      private static bool localFileExists(string file)
       {
          try
          {
