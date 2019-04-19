@@ -2,7 +2,7 @@
 
 namespace QualificationRunner.Core.Domain
 {
-   public class SaticFiles
+   public class StaticFiles
    {
       public ObservedDataMapping[] ObservedDatSets { get; set; }
    }

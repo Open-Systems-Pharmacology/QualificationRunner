@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -11,7 +12,6 @@ using OSPSuite.Core.Qualification;
 using OSPSuite.Core.Services;
 using OSPSuite.Utility;
 using OSPSuite.Utility.Extensions;
-using QualificationRunner.Core.Assets;
 using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
@@ -38,7 +38,7 @@ namespace QualificationRunner.Core.Services
       {
          _runOptions = runOptions;
 
-         clearOutputFolder();
+         setupOutputFolder();
 
          dynamic qualificationPlan = await _jsonSerializer.Deserialize<dynamic>(runOptions.ConfigurationFile);
 
@@ -50,13 +50,16 @@ namespace QualificationRunner.Core.Services
          IReadOnlyList<SimulationPlot> allPlots = retrieveProjectPlots(qualificationPlan);
          IReadOnlyList<Input> allInputs = retrieveInputs(qualificationPlan);
 
+
          var begin = DateTime.UtcNow;
+
+         await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
          var projectConfigurations = projects.Select(p => createQualifcationConfigurationFor(p, projects, allPlots, allInputs)).ToList();
 
          _logger.AddDebug("Copying static files");
-         SaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
+         StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
 
          _logger.AddDebug("Starting validation runs");
          var validations = await Task.WhenAll(projectConfigurations.Select(validateProject));
@@ -79,9 +82,52 @@ namespace QualificationRunner.Core.Services
          _logger.AddInfo($"Qualification scenario finished in {timeSpent.ToDisplay()}");
       }
 
-      private Task<SaticFiles> copyStaticFiles(dynamic qualificationPlan)
+      private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
+
+      private async Task<string> downloadRemoteFile(string url, string subFolder, string id, string type)
       {
-         var staticFiles = new SaticFiles();
+         _logger.AddDebug($"Downloading {type.ToLower()} file for {id}...");
+         var downloadFolder = Path.Combine(_runOptions.TempFolder, subFolder);
+         DirectoryHelper.CreateDirectory(downloadFolder);
+
+         using (var wc = new WebClient())
+         {
+            try
+            {
+               var fileName = new Uri(url).Segments.Last();
+               var fileFullPath = Path.Combine(downloadFolder, fileName);
+
+               await wc.DownloadFileTaskAsync(url, fileFullPath);
+               _logger.AddDebug($"{type} file for {id} downloaded to ${fileFullPath}");
+               return fileFullPath;
+            }
+            catch (Exception e)
+            {
+               //Exception is thrown for example if the given url does not exist or if internet access is not possible etc..
+               _logger.AddError(e.Message);
+               return url;
+            }
+         }
+      }
+
+      private async Task updateProjectFullPath(Project project)
+      {
+         Task<string> downloadRemoteProject() => downloadRemoteFile(project.Path, PROJECT_DOWNLOAD_FOLDER, project.Id, "Project");
+
+         var projectAbsolutePath = snapshotFileFor(project);
+
+         if (!localFileExists(projectAbsolutePath))
+            projectAbsolutePath = await downloadRemoteProject();
+
+         if (!localFileExists(projectAbsolutePath))
+            throw new QualificationRunException(SnapshotFileNotFound(projectAbsolutePath));
+
+         project.SnapshotFilePath = projectAbsolutePath;
+      }
+
+      private async Task<StaticFiles> copyStaticFiles(dynamic qualificationPlan)
+      {
+         var staticFiles = new StaticFiles();
          //Sections
          var contentFolder = Path.Combine(_runOptions.ConfigurationFolder, CONTENT_FOLDER);
 
@@ -90,21 +136,28 @@ namespace QualificationRunner.Core.Services
 
          //Observed Data
          IReadOnlyList<ObservedDataMapping> observedDataSets = getStaticObservedDataSetFrom(qualificationPlan);
-         staticFiles.ObservedDatSets = observedDataSets.Select(copyObservedData).ToArray();
+         staticFiles.ObservedDatSets = await Task.WhenAll(observedDataSets.Select(copyObservedData));
 
-         return Task.FromResult(staticFiles);
+         return staticFiles;
       }
 
       private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
 
-      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => Errors.ProjectConfigurationNotValid(x.Project, x.LogFile)).ToString("\n");
+      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, x.LogFile)).ToString("\n");
 
-      private ObservedDataMapping copyObservedData(ObservedDataMapping observedDataMapping)
+      private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {
-         var observedDataFilePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
-         var fileInfo = new FileInfo(observedDataFilePath);
-         if (!fileInfo.Exists)
-            throw new QualificationRunException(ObservedDataFileNotFound(observedDataFilePath));
+         Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, OBSERVED_DATA_DOWNLOAD_FOLDER, observedDataMapping.Id, "Observed Data");
+
+         var observedDataAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
+
+         if (!localFileExists(observedDataAbsolutePath))
+            observedDataAbsolutePath = await downloadRemoteObservedData();
+
+         if (!localFileExists(observedDataAbsolutePath))
+            throw new QualificationRunException(ObservedDataFileNotFound(observedDataAbsolutePath));
+
+         var fileInfo = new FileInfo(observedDataAbsolutePath);
 
          DirectoryHelper.CreateDirectory(_runOptions.ObservedDataFolder);
          var copiedObservedDataFilePath = absolutePathFrom(_runOptions.ObservedDataFolder, fileInfo.Name);
@@ -118,19 +171,30 @@ namespace QualificationRunner.Core.Services
          };
       }
 
+      private static bool localFileExists(string file)
+      {
+         try
+         {
+            return FileHelper.FileExists(file);
+         }
+         catch (Exception)
+         {
+            return false;
+         }
+      }
 
       private string pathRelativeToOutputFolder(string fullPath) => FileHelper.CreateRelativePath(fullPath, _runOptions.OutputFolder, useUnixPathSeparator: true);
 
       private string absolutePathFrom(string relatedTo, string relativePath)
       {
          var sanitizeRelativePath = relativePath;
-         if(sanitizeRelativePath.StartsWith(Path.DirectorySeparatorChar.ToString()) || sanitizeRelativePath.StartsWith(Path.AltDirectorySeparatorChar.ToString()))
-            sanitizeRelativePath= sanitizeRelativePath.Substring(1);
+         if (sanitizeRelativePath.StartsWith(Path.DirectorySeparatorChar.ToString()) || sanitizeRelativePath.StartsWith(Path.AltDirectorySeparatorChar.ToString()))
+            sanitizeRelativePath = sanitizeRelativePath.Substring(1);
 
          return Path.Combine(relatedTo, sanitizeRelativePath);
       }
 
-      private async Task createReportConfigurationPlan(QualificationRunResult[] runResults, SaticFiles staticFiles, dynamic qualificationPlan)
+      private async Task createReportConfigurationPlan(QualificationRunResult[] runResults, StaticFiles staticFiles, dynamic qualificationPlan)
       {
          dynamic reportConfigurationPlan = new JObject();
 
@@ -139,7 +203,7 @@ namespace QualificationRunner.Core.Services
          reportConfigurationPlan.SimulationMappings = toJArray(mappings.SelectMany(x => x.SimulationMappings));
 
          reportConfigurationPlan.ObservedDataSets = toJArray(mappings.SelectMany(x => x.ObservedDataMappings).Union(staticFiles.ObservedDatSets));
-         
+
          var plots = qualificationPlan.Plots;
          RemoveByName(plots, Configuration.ALL_PLOTS);
 
@@ -177,10 +241,7 @@ namespace QualificationRunner.Core.Services
       {
          var projectId = project.Id;
 
-         var tmpFolder = Path.Combine(_runOptions.OutputFolder, "temp");
-         DirectoryHelper.CreateDirectory(tmpFolder);
-
-         var tmpProjectFolder = Path.Combine(tmpFolder, projectId);
+         var tmpProjectFolder = Path.Combine(_runOptions.TempFolder, projectId);
 
          DirectoryHelper.CreateDirectory(tmpProjectFolder);
 
@@ -192,7 +253,7 @@ namespace QualificationRunner.Core.Services
             ObservedDataFolder = _runOptions.ObservedDataFolder,
             InputsFolder = _runOptions.InputsFolder,
             MappingFile = Path.Combine(tmpProjectFolder, "mapping.json"),
-            SnapshotFile = snapshotFileFor(project),
+            SnapshotFile = project.SnapshotFilePath,
             TempFolder = tmpProjectFolder,
             BuildingBlocks = mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
@@ -203,7 +264,7 @@ namespace QualificationRunner.Core.Services
 
       private string snapshotFileFor(Project project) => absolutePathFrom(_runOptions.ConfigurationFolder, project.Path);
 
-      private BuildingBlockSwap[] mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects) => 
+      private BuildingBlockSwap[] mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects) =>
          buildingBlocks?.Select(bb => mapBuildingBlock(bb, projects)).ToArray();
 
       private BuildingBlockSwap mapBuildingBlock(BuildingBlockRef buildingBlock, IReadOnlyList<Project> projects)
@@ -216,13 +277,12 @@ namespace QualificationRunner.Core.Services
          {
             Name = buildingBlock.Name,
             Type = buildingBlock.Type,
-            SnapshotFile = snapshotFileFor(project)
+            SnapshotFile = project.SnapshotFilePath,
          };
       }
 
       private SimulationParameterSwap[] mapSimulationParameters(SimulationParameterRef[] simulationParameters, IReadOnlyList<Project> projects) =>
          simulationParameters?.Select(x => mapSimulationParameter(x, projects)).ToArray();
-
 
       private SimulationParameterSwap mapSimulationParameter(SimulationParameterRef simulationParameter, IReadOnlyList<Project> projects)
       {
@@ -235,7 +295,7 @@ namespace QualificationRunner.Core.Services
             Simulation = simulationParameter.Simulation,
             Path = simulationParameter.Path,
             TargetSimulations = simulationParameter.TargetSimulations,
-            SnapshotFile = snapshotFileFor(project)
+            SnapshotFile = project.SnapshotFilePath
          };
       }
 
@@ -244,6 +304,14 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<Input> retrieveInputs(dynamic reportConfiguration) =>
          GetListFrom<Input>(reportConfiguration.Inputs);
+
+      private void setupOutputFolder()
+      {
+         clearOutputFolder();
+
+         DirectoryHelper.CreateDirectory(_runOptions.OutputFolder);
+         DirectoryHelper.CreateDirectory(_runOptions.TempFolder);
+      }
 
       private void clearOutputFolder()
       {

@@ -14,6 +14,9 @@ namespace QualificationRunner.Core
       public const string CONTENT_FOLDER = "Content";
       public const string OBSERVED_DATA_FOLDER = "ObservedData";
       public const string INPUTS_FOLDER = "Inputs";
+      public const string TEMP_FOLDER = "temp";
+      public const string PROJECT_DOWNLOAD_FOLDER = "_project";
+      public const string OBSERVED_DATA_DOWNLOAD_FOLDER = "_observedData";
 
       public static class Tools
       {

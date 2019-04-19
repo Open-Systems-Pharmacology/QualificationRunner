@@ -19,5 +19,7 @@ namespace QualificationRunner.Core.RunOptions
       public string InputsFolder => Path.Combine(OutputFolder, Constants.INPUTS_FOLDER);
 
       public string ReportConfigurationFile => Path.Combine(OutputFolder, $"{ReportConfigurationFileName}.json");
+
+      public string TempFolder => Path.Combine(OutputFolder, Constants.TEMP_FOLDER);
    }
 }
