@@ -16,7 +16,6 @@ using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
 using static QualificationRunner.Core.Constants;
-using static OSPSuite.Core.Domain.Constants;
 using Project = QualificationRunner.Core.Domain.Project;
 
 namespace QualificationRunner.Core.Services
@@ -91,7 +90,6 @@ namespace QualificationRunner.Core.Services
          var downloadFolder = Path.Combine(_runOptions.TempFolder, subFolder);
          DirectoryHelper.CreateDirectory(downloadFolder);
 
-         
          using (var wc = new WebClient())
          {
             try
@@ -152,7 +150,7 @@ namespace QualificationRunner.Core.Services
          Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, OBSERVED_DATA_DOWNLOAD_FOLDER, observedDataMapping.Id, "Observed Data");
 
          var observedDataAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
-         
+
          if (!localFileExists(observedDataAbsolutePath))
             observedDataAbsolutePath = await downloadRemoteObservedData();
 
