@@ -164,7 +164,7 @@
     <Compile Include="Domain\ExitCodes.cs" />
     <Compile Include="Domain\LogWatcher.cs" />
     <Compile Include="Domain\Project.cs" />
-    <Compile Include="Domain\SaticFiles.cs" />
+    <Compile Include="Domain\StaticFiles.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QualificationRunnerConfiguration.cs" />
