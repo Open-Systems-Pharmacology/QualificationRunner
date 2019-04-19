@@ -26,5 +26,7 @@ namespace QualificationRunner.Core.Assets
       public static string ProjectConfigurationNotValid(string project, string logFile) => $"Project configuration for '{project}' is invalid. Please check log file at '{logFile}' for details.";
 
       public static string ObservedDataFileNotFound(string observedDataFilePath) => $"Observed data file '{observedDataFilePath}' does not exist.";
+
+      public static string SnapshotFileNotFound(string snapshotFilePath) => $"Snapshot file '{snapshotFilePath}' does not exist.";
    }
 }

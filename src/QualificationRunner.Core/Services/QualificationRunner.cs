@@ -85,8 +85,9 @@ namespace QualificationRunner.Core.Services
 
       private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
 
-      private async Task<string> downloadRemoteFile(string subFolder, string fileName, string url)
+      private async Task<string> downloadRemoteFile(string url, string fileName, string subFolder, string id, string type)
       {
+         _logger.AddDebug($"Downloading {type.ToLower()} file for {id}...");
          var downloadFolder = Path.Combine(_runOptions.TempFolder, subFolder);
          DirectoryHelper.CreateDirectory(downloadFolder);
 
@@ -94,41 +95,37 @@ namespace QualificationRunner.Core.Services
 
          using (var wc = new WebClient())
          {
-            await wc.DownloadFileTaskAsync(url, fileFullPath);
-            return fileFullPath;
+            try
+            {
+               await wc.DownloadFileTaskAsync(url, fileFullPath);
+               _logger.AddDebug($"{type} file for {id} downloaded to ${fileFullPath}");
+               return fileFullPath;
+            }
+            catch (Exception e)
+            {
+               //Exception is thrown for example if the given url does not exist or if internet access is not possible etc..
+               _logger.AddError(e.Message);
+               return url;
+            }
          }
       }
 
       private async Task updateProjectFullPath(Project project)
       {
-         async Task<string> DownloadRemoteProject()
-         {
-            _logger.AddDebug($"Downloading project file for {project.Id}...");
-            var file = await downloadRemoteFile(PROJECT_DOWNLOAD_FOLDER, $"{project.Id}{Filter.JSON_EXTENSION}", project.Path);
-            _logger.AddDebug($"Project file for {project.Id} downloaded to ${file}");
-            return file;
-         }
+         Task<string> downloadRemoteProject() => downloadRemoteFile(project.Path, $"{project.Id}{Filter.JSON_EXTENSION}", PROJECT_DOWNLOAD_FOLDER, project.Id, "Project");
 
-         try
-         {
-            //This is a local file: Just use it
-            var projectFullPath = snapshotFileFor(project);
-            if (FileHelper.FileExists(projectFullPath))
-            {
-               project.SnapshotFilePath = projectFullPath;
-               return;
-            }
+         var projectAbsolutePath = snapshotFileFor(project);
 
-            project.SnapshotFilePath = await DownloadRemoteProject();
-         }
-         catch (Exception)
-         {
-            //Exception can be thrown from FileExists if path is a url.
-            project.SnapshotFilePath = await DownloadRemoteProject();
-         }
+         if (!isLocalFileAndExists(projectAbsolutePath))
+            projectAbsolutePath = await downloadRemoteProject();
+
+         if (!isLocalFileAndExists(projectAbsolutePath))
+            throw new QualificationRunException(SnapshotFileNotFound(projectAbsolutePath));
+
+         project.SnapshotFilePath = projectAbsolutePath;
       }
 
-      private Task<StaticFiles> copyStaticFiles(dynamic qualificationPlan)
+      private async Task<StaticFiles> copyStaticFiles(dynamic qualificationPlan)
       {
          var staticFiles = new StaticFiles();
          //Sections
@@ -139,21 +136,28 @@ namespace QualificationRunner.Core.Services
 
          //Observed Data
          IReadOnlyList<ObservedDataMapping> observedDataSets = getStaticObservedDataSetFrom(qualificationPlan);
-         staticFiles.ObservedDatSets = observedDataSets.Select(copyObservedData).ToArray();
+         staticFiles.ObservedDatSets = await Task.WhenAll(observedDataSets.Select(copyObservedData));
 
-         return Task.FromResult(staticFiles);
+         return staticFiles;
       }
 
       private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
 
       private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, x.LogFile)).ToString("\n");
 
-      private ObservedDataMapping copyObservedData(ObservedDataMapping observedDataMapping)
+      private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {
-         var observedDataFilePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
-         var fileInfo = new FileInfo(observedDataFilePath);
-         if (!fileInfo.Exists)
-            throw new QualificationRunException(ObservedDataFileNotFound(observedDataFilePath));
+         Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, $"{observedDataMapping.Id}{Filter.CSV_EXTENSION}", OBSERVED_DATA_DOWNLOAD_FOLDER, observedDataMapping.Id, "Observed Data");
+
+         var observedDataAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
+         
+         if (!isLocalFileAndExists(observedDataAbsolutePath))
+            observedDataAbsolutePath = await downloadRemoteObservedData();
+
+         if (!isLocalFileAndExists(observedDataAbsolutePath))
+            throw new QualificationRunException(ObservedDataFileNotFound(observedDataAbsolutePath));
+
+         var fileInfo = new FileInfo(observedDataAbsolutePath);
 
          DirectoryHelper.CreateDirectory(_runOptions.ObservedDataFolder);
          var copiedObservedDataFilePath = absolutePathFrom(_runOptions.ObservedDataFolder, fileInfo.Name);
@@ -165,6 +169,18 @@ namespace QualificationRunner.Core.Services
             Type = observedDataMapping.Type,
             Path = pathRelativeToOutputFolder(copiedObservedDataFilePath)
          };
+      }
+
+      private static bool isLocalFileAndExists(string file)
+      {
+         try
+         {
+            return FileHelper.FileExists(file);
+         }
+         catch (Exception)
+         {
+            return false;
+         }
       }
 
       private string pathRelativeToOutputFolder(string fullPath) => FileHelper.CreateRelativePath(fullPath, _runOptions.OutputFolder, useUnixPathSeparator: true);
