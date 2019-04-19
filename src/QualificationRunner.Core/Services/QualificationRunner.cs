@@ -270,7 +270,7 @@ namespace QualificationRunner.Core.Services
             if (project == null)
                throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
 
-            snapshotFilePath = await snapshotFileFullPathFor(project);
+            snapshotFilePath = project.SnapshotFilePath;
          }
          else
             snapshotFilePath = await snapshotFileFullPathFor(buildingBlock.Path);
