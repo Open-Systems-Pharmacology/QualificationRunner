@@ -260,28 +260,37 @@ namespace QualificationRunner.Core.Services
          return Task.WhenAll(buildingBlocks.Select(bb => mapBuildingBlock(bb, projects)));
       }
 
-      private async Task<BuildingBlockSwap> mapBuildingBlock(BuildingBlockRef buildingBlock, IReadOnlyList<Project> projects)
+      private Task<BuildingBlockSwap> mapBuildingBlock(BuildingBlockRef buildingBlock, IReadOnlyList<Project> projects)
       {
-         string snapshotFilePath;
          // Using a project reference
-         if (!string.IsNullOrEmpty(buildingBlock.Project))
-         {
-            var project = projects.FindById(buildingBlock.Project);
-            if (project == null)
-               throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
+         //TODO uncomment when remote building block supported
+      //   string snapshotFilePath;
+         //         if (!string.IsNullOrEmpty(buildingBlock.Project))
+         //         {
+         //            var project = projects.FindById(buildingBlock.Project);
+         //            if (project == null)
+         //               throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
+         //
+         //            snapshotFilePath = project.SnapshotFilePath;
+         //         }
+         //         else
+         //            snapshotFilePath = await snapshotFileFullPathFor(buildingBlock.Path);
 
-            snapshotFilePath = project.SnapshotFilePath;
-         }
-         else
-            snapshotFilePath = await snapshotFileFullPathFor(buildingBlock.Path);
 
+         var project = projects.FindById(buildingBlock.Project);
+         if (project == null)
+            throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
+         
+         var snapshotFilePath = project.SnapshotFilePath;
 
-         return new BuildingBlockSwap
+         var buildingBlockSwap =  new BuildingBlockSwap
          {
             Name = buildingBlock.Name,
             Type = buildingBlock.Type,
             SnapshotFile = snapshotFilePath
          };
+
+         return Task.FromResult(buildingBlockSwap);
       }
 
       private Task<string> snapshotFileFullPathFor(Project project) => snapshotFileFullPathFor(project.Path);
