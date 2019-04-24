@@ -16,7 +16,9 @@ using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
 using static QualificationRunner.Core.Constants;
+using BuildingBlockRef = QualificationRunner.Core.Domain.BuildingBlockRef;
 using Project = QualificationRunner.Core.Domain.Project;
+using SimulationParameterRef = QualificationRunner.Core.Domain.SimulationParameterRef;
 
 namespace QualificationRunner.Core.Services
 {
@@ -56,7 +58,7 @@ namespace QualificationRunner.Core.Services
          await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
-         var projectConfigurations = projects.Select(p => createQualifcationConfigurationFor(p, projects, allPlots, allInputs)).ToList();
+         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, allPlots, allInputs)));
 
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
@@ -84,10 +86,10 @@ namespace QualificationRunner.Core.Services
 
       private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
 
-      private async Task<string> downloadRemoteFile(string url, string subFolder, string id, string type)
+      private async Task<string> downloadRemoteFile(string url, string locationInTempFolder, string type)
       {
-         _logger.AddDebug($"Downloading {type.ToLower()} file for {id}...");
-         var downloadFolder = Path.Combine(_runOptions.TempFolder, subFolder);
+         _logger.AddDebug($"Downloading {type.ToLower()} file from {url}...");
+         var downloadFolder = Path.Combine(_runOptions.TempFolder, locationInTempFolder);
          DirectoryHelper.CreateDirectory(downloadFolder);
 
          using (var wc = new WebClient())
@@ -98,7 +100,7 @@ namespace QualificationRunner.Core.Services
                var fileFullPath = Path.Combine(downloadFolder, fileName);
 
                await wc.DownloadFileTaskAsync(url, fileFullPath);
-               _logger.AddDebug($"{type} file for {id} downloaded to ${fileFullPath}");
+               _logger.AddDebug($"{type} file downloaded from {url}to {fileFullPath}");
                return fileFullPath;
             }
             catch (Exception e)
@@ -110,20 +112,7 @@ namespace QualificationRunner.Core.Services
          }
       }
 
-      private async Task updateProjectFullPath(Project project)
-      {
-         Task<string> downloadRemoteProject() => downloadRemoteFile(project.Path, PROJECT_DOWNLOAD_FOLDER, project.Id, "Project");
-
-         var projectAbsolutePath = snapshotFileFor(project);
-
-         if (!localFileExists(projectAbsolutePath))
-            projectAbsolutePath = await downloadRemoteProject();
-
-         if (!localFileExists(projectAbsolutePath))
-            throw new QualificationRunException(SnapshotFileNotFound(projectAbsolutePath));
-
-         project.SnapshotFilePath = projectAbsolutePath;
-      }
+      private async Task updateProjectFullPath(Project project) => project.SnapshotFilePath = await snapshotFileFullPathFor(project);
 
       private async Task<StaticFiles> copyStaticFiles(dynamic qualificationPlan)
       {
@@ -147,7 +136,7 @@ namespace QualificationRunner.Core.Services
 
       private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {
-         Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, OBSERVED_DATA_DOWNLOAD_FOLDER, observedDataMapping.Id, "Observed Data");
+         Task<string> downloadRemoteObservedData() => downloadRemoteFile(observedDataMapping.Path, OBSERVED_DATA_DOWNLOAD_FOLDER, "Observed Data");
 
          var observedDataAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, observedDataMapping.Path);
 
@@ -237,7 +226,7 @@ namespace QualificationRunner.Core.Services
          }
       }
 
-      private QualifcationConfiguration createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, IReadOnlyList<SimulationPlot> allPlots, IReadOnlyList<Input> alInputs)
+      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, IReadOnlyList<SimulationPlot> allPlots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -255,30 +244,62 @@ namespace QualificationRunner.Core.Services
             MappingFile = Path.Combine(tmpProjectFolder, "mapping.json"),
             SnapshotFile = project.SnapshotFilePath,
             TempFolder = tmpProjectFolder,
-            BuildingBlocks = mapBuildingBlocks(project.BuildingBlocks, projects),
+            BuildingBlocks = await mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
             SimulationPlots = allPlots.ForProject(projectId),
             Inputs = alInputs.ForProject(projectId)
          };
       }
 
-      private string snapshotFileFor(Project project) => absolutePathFrom(_runOptions.ConfigurationFolder, project.Path);
 
-      private BuildingBlockSwap[] mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects) =>
-         buildingBlocks?.Select(bb => mapBuildingBlock(bb, projects)).ToArray();
-
-      private BuildingBlockSwap mapBuildingBlock(BuildingBlockRef buildingBlock, IReadOnlyList<Project> projects)
+      private Task<BuildingBlockSwap[]> mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects)
       {
-         var project = projects.FindById(buildingBlock.Project);
-         if (project == null)
-            throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
+         if (buildingBlocks == null)
+            return Task.FromResult(Array.Empty<BuildingBlockSwap>());
+
+         return Task.WhenAll(buildingBlocks.Select(bb => mapBuildingBlock(bb, projects)));
+      }
+
+      private async Task<BuildingBlockSwap> mapBuildingBlock(BuildingBlockRef buildingBlock, IReadOnlyList<Project> projects)
+      {
+         string snapshotFilePath;
+         // Using a project reference
+         if (!string.IsNullOrEmpty(buildingBlock.Project))
+         {
+            var project = projects.FindById(buildingBlock.Project);
+            if (project == null)
+               throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
+
+            snapshotFilePath = project.SnapshotFilePath;
+         }
+         else
+            snapshotFilePath = await snapshotFileFullPathFor(buildingBlock.Path);
+
 
          return new BuildingBlockSwap
          {
             Name = buildingBlock.Name,
             Type = buildingBlock.Type,
-            SnapshotFile = project.SnapshotFilePath,
+            SnapshotFile = snapshotFilePath
          };
+      }
+
+      private Task<string> snapshotFileFullPathFor(Project project) => snapshotFileFullPathFor(project.Path);
+
+      private async Task<string> snapshotFileFullPathFor(string snapshotRelativePathOrUrl)
+      {
+         Task<string> downloadRemoteSnapshot() => downloadRemoteFile(snapshotRelativePathOrUrl, PROJECT_DOWNLOAD_FOLDER, "Project");
+
+         var snapshotAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, snapshotRelativePathOrUrl);
+
+         if (!localFileExists(snapshotAbsolutePath))
+            snapshotAbsolutePath = await downloadRemoteSnapshot();
+
+         if (!localFileExists(snapshotAbsolutePath))
+            throw new QualificationRunException(SnapshotFileNotFound(snapshotAbsolutePath));
+
+         return snapshotAbsolutePath;
+
       }
 
       private SimulationParameterSwap[] mapSimulationParameters(SimulationParameterRef[] simulationParameters, IReadOnlyList<Project> projects) =>
