@@ -6,10 +6,10 @@ using QualificationRunner.Core.RunOptions;
 
 namespace QualificationRunner.Commands
 {
-   [Verb("qualification", HelpText = "Start qualification run workflow")]
+   [Verb("qualification", HelpText = "Start qualification workflow")]
    public class QualificationRunCommand : CLICommand<QualificationRunOptions>
    {
-      public override string Name { get; } = "Qualification";
+      public override string Name { get; } = "Qualification Workflow";
 
       [Option('i', "input", Required = true, HelpText = "Json configuration input file used to start the qualification workflow.")]
       public string ConfigurationFile { get; set; }

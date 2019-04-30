@@ -35,17 +35,19 @@ namespace QualificationRunner
       {
          var logger = initializeLogger(command);
 
-         logger.AddInfo($"Starting {command.Name.ToLower()} run with arguments:\n{command}");
+         logger.AddInfo($"Starting {command.Name.ToLower()}");
+         logger.AddDebug($"Arguments:\n{command}");
+         
          var runner = IoC.Resolve<IBatchRunner<TRunOptions>>();
          try
          {
             runner.RunBatchAsync(command.ToRunOptions()).Wait();
-            logger.AddInfo($"{command.Name} run finished");
+            logger.AddInfo($"{command.Name} finished");
          }
          catch (Exception e)
          {
             logger.AddException(e);
-            logger.AddError($"{command.Name} run failed");
+            logger.AddError($"{command.Name} failed");
             _valid = false;
          }
       }
