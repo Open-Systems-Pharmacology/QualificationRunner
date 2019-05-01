@@ -165,6 +165,7 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Domain\BuildingBlockRef.cs" />
     <Compile Include="Domain\ExitCodes.cs" />
+    <Compile Include="Domain\IntroFile.cs" />
     <Compile Include="Domain\LogWatcher.cs" />
     <Compile Include="Domain\Project.cs" />
     <Compile Include="Domain\SimulationParameterRef.cs" />

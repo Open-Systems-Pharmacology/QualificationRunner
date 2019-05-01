@@ -18,6 +18,10 @@ namespace QualificationRunner.Core.RunOptions
 
       public string InputsFolder => Path.Combine(OutputFolder, Constants.INPUTS_FOLDER);
 
+      public string ContentFolder => Path.Combine(OutputFolder, Constants.CONTENT_FOLDER);
+
+      public string IntroFolder => Path.Combine(OutputFolder, Constants.INTRO_FOLDER);
+
       public string ReportConfigurationFile => Path.Combine(OutputFolder, $"{ReportConfigurationFileName}.json");
 
       public string TempFolder => Path.Combine(OutputFolder, Constants.TEMP_FOLDER);

@@ -22,10 +22,11 @@ namespace QualificationRunner.Core.Assets
 
       public static string ReferencedProjectNotDefinedInQualificationFile(string project) => $"Referenced project '{project}' is not defined in qualification file";
 
-
       public static string ProjectConfigurationNotValid(string project, string logFile) => $"Project configuration for '{project}' is invalid. Please check log file at '{logFile}' for details.";
 
       public static string ObservedDataFileNotFound(string observedDataFilePath) => $"Observed data file '{observedDataFilePath}' does not exist.";
+
+      public static string IntroductionFileNotFound(string introductionFilePath) => $"Introduction file '{introductionFilePath}' does not exist.";
 
       public static string SnapshotFileNotFound(string snapshotFilePath) => $"Snapshot file '{snapshotFilePath}' does not exist.";
    }

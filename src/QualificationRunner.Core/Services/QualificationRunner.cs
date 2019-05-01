@@ -16,9 +16,8 @@ using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
 using static QualificationRunner.Core.Constants;
-using BuildingBlockRef = QualificationRunner.Core.Domain.BuildingBlockRef;
+using static OSPSuite.Core.Domain.Constants.Filter;
 using Project = QualificationRunner.Core.Domain.Project;
-using SimulationParameterRef = QualificationRunner.Core.Domain.SimulationParameterRef;
 
 namespace QualificationRunner.Core.Services
 {
@@ -117,15 +116,17 @@ namespace QualificationRunner.Core.Services
       private async Task<StaticFiles> copyStaticFiles(dynamic qualificationPlan)
       {
          var staticFiles = new StaticFiles();
-         //Sections
-         var contentFolder = Path.Combine(_runOptions.ConfigurationFolder, CONTENT_FOLDER);
 
-         if (DirectoryHelper.DirectoryExists(contentFolder))
-            FileHelper.CopyDirectory(contentFolder, _runOptions.OutputFolder);
+         //Sections
+         if (DirectoryHelper.DirectoryExists(_runOptions.ContentFolder))
+            FileHelper.CopyDirectory(_runOptions.ContentFolder, _runOptions.OutputFolder);
 
          //Observed Data
          IReadOnlyList<ObservedDataMapping> observedDataSets = getStaticObservedDataSetFrom(qualificationPlan);
          staticFiles.ObservedDatSets = await Task.WhenAll(observedDataSets.Select(copyObservedData));
+
+         //Intro files
+         staticFiles.IntroFiles = await copyIntroFiles(qualificationPlan);
 
          return staticFiles;
       }
@@ -158,6 +159,36 @@ namespace QualificationRunner.Core.Services
             Type = observedDataMapping.Type,
             Path = pathRelativeToOutputFolder(copiedObservedDataFilePath)
          };
+      }
+
+      private Task<IntroFile[]> copyIntroFiles(dynamic qualificationPlan)
+      {
+         IReadOnlyList<IntroFile> introFiles = GetListFrom<IntroFile>(qualificationPlan.Intro);
+         return Task.WhenAll(introFiles.Select(copyIntroFile));
+      }
+
+      private async Task<IntroFile> copyIntroFile(IntroFile introFile)
+      {
+         Task<string> downloadRemoteIntroductionFile() => downloadRemoteFile(introFile.Path, INTRODUCTION_DOWNLOAD_FOLDER, "Introduction");
+
+         var introductionFileAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, introFile.Path);
+         if (!localFileExists(introductionFileAbsolutePath))
+            introductionFileAbsolutePath = await downloadRemoteIntroductionFile();
+
+         if (!localFileExists(introductionFileAbsolutePath))
+            throw new QualificationRunException(IntroductionFileNotFound(introductionFileAbsolutePath));
+
+         var fileInfo = new FileInfo(introductionFileAbsolutePath);
+
+         DirectoryHelper.CreateDirectory(_runOptions.IntroFolder);
+         var fileName = introFile.Name ?? fileInfo.Name;
+         if (!fileName.EndsWith(MARKDOWN_EXTENSION))
+            fileName = $"{fileName}{MARKDOWN_EXTENSION}";
+
+         var copiedIntroductionFilePath = absolutePathFrom(_runOptions.IntroFolder, fileName);
+         fileInfo.CopyTo(copiedIntroductionFilePath, overwrite: true);
+
+         return new IntroFile {Path = pathRelativeToOutputFolder(copiedIntroductionFilePath) };
       }
 
       private static bool localFileExists(string file)
@@ -202,6 +233,8 @@ namespace QualificationRunner.Core.Services
          reportConfigurationPlan.Inputs = toJArray(mappings.SelectMany(x => x.Inputs));
 
          reportConfigurationPlan.Sections = qualificationPlan.Sections;
+
+         reportConfigurationPlan.Intro = toJArray(staticFiles.IntroFiles);
 
          await _jsonSerializer.Serialize(reportConfigurationPlan, _runOptions.ReportConfigurationFile);
       }
@@ -251,7 +284,6 @@ namespace QualificationRunner.Core.Services
          };
       }
 
-
       private Task<BuildingBlockSwap[]> mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects)
       {
          if (buildingBlocks == null)
@@ -264,7 +296,7 @@ namespace QualificationRunner.Core.Services
       {
          // Using a project reference
          //TODO uncomment when remote building block supported
-      //   string snapshotFilePath;
+         //   string snapshotFilePath;
          //         if (!string.IsNullOrEmpty(buildingBlock.Project))
          //         {
          //            var project = projects.FindById(buildingBlock.Project);
@@ -280,10 +312,10 @@ namespace QualificationRunner.Core.Services
          var project = projects.FindById(buildingBlock.Project);
          if (project == null)
             throw new QualificationRunException(ReferencedProjectNotDefinedInQualificationFile(buildingBlock.Project));
-         
+
          var snapshotFilePath = project.SnapshotFilePath;
 
-         var buildingBlockSwap =  new BuildingBlockSwap
+         var buildingBlockSwap = new BuildingBlockSwap
          {
             Name = buildingBlock.Name,
             Type = buildingBlock.Type,
@@ -308,7 +340,6 @@ namespace QualificationRunner.Core.Services
             throw new QualificationRunException(SnapshotFileNotFound(snapshotAbsolutePath));
 
          return snapshotAbsolutePath;
-
       }
 
       private SimulationParameterSwap[] mapSimulationParameters(SimulationParameterRef[] simulationParameters, IReadOnlyList<Project> projects) =>
