@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using CommandLine;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core.Services;
@@ -24,7 +25,9 @@ namespace QualificationRunner
             .WithParsed(startCommand)
             .WithNotParsed(err => _valid = false);
 
-         Console.ReadLine();
+         if (Debugger.IsAttached)
+            Console.ReadLine();
+
          if (!_valid)
             return (int) ExitCodes.Error;
 
