@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using QualificationRunner.Core.Domain.InstallationValidator.Core.Domain;
+using QualificationRunner.Core.Domain;
 
 namespace QualificationRunner.Core.Services
 {
