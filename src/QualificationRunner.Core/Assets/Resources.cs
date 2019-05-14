@@ -26,6 +26,8 @@ namespace QualificationRunner.Core.Assets
 
       public static string ObservedDataFileNotFound(string observedDataFilePath) => $"Observed data file '{observedDataFilePath}' does not exist.";
 
+      public static string ContentFileNotFound(string contentFilePath) => $"content file '{contentFilePath}' does not exist.";
+
       public static string IntroductionFileNotFound(string introductionFilePath) => $"Introduction file '{introductionFilePath}' does not exist.";
 
       public static string SnapshotFileNotFound(string snapshotFilePath) => $"Snapshot file '{snapshotFilePath}' does not exist.";

@@ -25,9 +25,9 @@ namespace QualificationRunner.Core.RunOptions
       public string InputsFolder => Path.Combine(OutputFolder, Constants.INPUTS_FOLDER);
 
       /// <summary>
-      /// This is the Input content folder relative to the configuration file
+      /// This is the Content folder that will be created in the output folder
       /// </summary>
-      public string ContentFolder => Path.Combine(ConfigurationFolder, Constants.CONTENT_FOLDER);
+      public string ContentFolder => Path.Combine(OutputFolder, Constants.CONTENT_FOLDER);
 
       /// <summary>
       /// This is the Intro folder that will be created in the output folder

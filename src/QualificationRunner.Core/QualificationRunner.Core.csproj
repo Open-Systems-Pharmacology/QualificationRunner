@@ -168,6 +168,7 @@
     <Compile Include="Domain\IntroFile.cs" />
     <Compile Include="Domain\LogWatcher.cs" />
     <Compile Include="Domain\Project.cs" />
+    <Compile Include="Domain\Section.cs" />
     <Compile Include="Domain\SimulationParameterRef.cs" />
     <Compile Include="Domain\StaticFiles.cs" />
     <Compile Include="Extensions.cs" />
