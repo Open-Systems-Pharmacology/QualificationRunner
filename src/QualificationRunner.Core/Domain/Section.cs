@@ -1,10 +1,8 @@
-﻿using OSPSuite.Core.Domain;
-
-namespace QualificationRunner.Core.Domain
+﻿namespace QualificationRunner.Core.Domain
 {
-   public class Section : IWithId
+   public class Section
    {
-      public string Id { get; set; }
+      public int Id { get; set; }
       public string Title { get; set; }
       public string Content { get; set; }
       public Section[] Sections { get; set; }
