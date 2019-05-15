@@ -51,7 +51,6 @@ namespace QualificationRunner.Core.Services
          IReadOnlyList<SimulationPlot> allPlots = retrieveProjectPlots(qualificationPlan);
          IReadOnlyList<Input> allInputs = retrieveInputs(qualificationPlan);
 
-
          var begin = DateTime.UtcNow;
 
          await updateProjectsFullPath(projects);
@@ -118,8 +117,8 @@ namespace QualificationRunner.Core.Services
          var staticFiles = new StaticFiles();
 
          //Sections
-         if (DirectoryHelper.DirectoryExists(_runOptions.ContentFolder))
-            FileHelper.CopyDirectory(_runOptions.ContentFolder, _runOptions.OutputFolder);
+         IReadOnlyList<Section> sections = retrieveSections(qualificationPlan);
+         staticFiles.Sections = await copySectionContents(sections.ToArray());
 
          //Observed Data
          IReadOnlyList<ObservedDataMapping> observedDataSets = getStaticObservedDataSetFrom(qualificationPlan);
@@ -158,6 +157,41 @@ namespace QualificationRunner.Core.Services
             Id = observedDataMapping.Id,
             Type = observedDataMapping.Type,
             Path = pathRelativeToOutputFolder(copiedObservedDataFilePath)
+         };
+      }
+
+      private Task<Section[]> copySectionContents(Section[] sections)
+      {
+         if (sections == null)
+            return Task.FromResult(Array.Empty<Section>());
+
+         return Task.WhenAll(sections.Select(copySectionContent));
+      }
+
+      private async Task<Section> copySectionContent(Section section)
+      {
+         Task<string> downloadRemoteSectionContent() => downloadRemoteFile(section.Content, CONTENT_DOWNLOAD_FOLDER, "Content");
+
+         var contentAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, section.Content);
+
+         if (!localFileExists(contentAbsolutePath))
+            contentAbsolutePath = await downloadRemoteSectionContent();
+
+         if (!localFileExists(contentAbsolutePath))
+            throw new QualificationRunException(ContentFileNotFound(contentAbsolutePath));
+
+         var fileInfo = new FileInfo(contentAbsolutePath);
+
+         DirectoryHelper.CreateDirectory(_runOptions.ContentFolder);
+         var copiedContentDataFilePath = absolutePathFrom(_runOptions.ContentFolder, fileInfo.Name);
+         fileInfo.CopyTo(copiedContentDataFilePath, overwrite: true);
+
+         return new Section
+         {
+            Id = section.Id,
+            Title = section.Title,
+            Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
+            Sections = await copySectionContents(section.Sections)
          };
       }
 
@@ -232,7 +266,7 @@ namespace QualificationRunner.Core.Services
 
          reportConfigurationPlan.Inputs = toJArray(mappings.SelectMany(x => x.Inputs));
 
-         reportConfigurationPlan.Sections = qualificationPlan.Sections;
+         reportConfigurationPlan.Sections = toJArray(staticFiles.Sections);
 
          reportConfigurationPlan.Intro = toJArray(staticFiles.IntroFiles);
 
@@ -365,6 +399,9 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<Input> retrieveInputs(dynamic reportConfiguration) =>
          GetListFrom<Input>(reportConfiguration.Inputs);
+
+      private IReadOnlyList<Section> retrieveSections(dynamic reportConfiguration) =>
+         GetListFrom<Section>(reportConfiguration.Sections);
 
       private void setupOutputFolder()
       {

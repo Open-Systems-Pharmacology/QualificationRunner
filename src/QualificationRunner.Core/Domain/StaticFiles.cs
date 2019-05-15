@@ -6,5 +6,6 @@ namespace QualificationRunner.Core.Domain
    {
       public ObservedDataMapping[] ObservedDatSets { get; set; }
       public IntroFile[] IntroFiles { get; set; }
+      public Section[] Sections { get; set; }
    }
 }
