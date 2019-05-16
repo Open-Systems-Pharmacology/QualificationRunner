@@ -50,7 +50,7 @@ namespace QualificationRunner.Core
       {
          try
          {
-            return (string) Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{MajorVersion}", installDir, null);
+            return (string) Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{Version}", installDir, null);
          }
          catch (Exception)
          {
