@@ -5,6 +5,7 @@ namespace QualificationRunner.Core.Assets
    public static class Logs
    {
       public static string StartingQualificationRunForProject(string projectId) => $"Starting qualification run for project '{projectId}'";
+
       public static string QualificationConfigurationForProjectExportedTo(string projectId, string file) => $"Qualification configuration for project '{projectId}' exported to '{file}'";
    }
 
@@ -31,5 +32,7 @@ namespace QualificationRunner.Core.Assets
       public static string IntroductionFileNotFound(string introductionFilePath) => $"Introduction file '{introductionFilePath}' does not exist.";
 
       public static string SnapshotFileNotFound(string snapshotFilePath) => $"Snapshot file '{snapshotFilePath}' does not exist.";
+
+      public static string ConfigurationFileNotFound(string configurationFilePath) => $"Configuration file '{configurationFilePath}' does not exist.";
    }
 }

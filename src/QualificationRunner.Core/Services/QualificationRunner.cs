@@ -39,6 +39,9 @@ namespace QualificationRunner.Core.Services
       {
          _runOptions = runOptions;
 
+         if (!FileHelper.FileExists(runOptions.ConfigurationFile))
+            throw new QualificationRunException(ConfigurationFileNotFound(runOptions.ConfigurationFile));
+
          setupOutputFolder();
 
          dynamic qualificationPlan = await _jsonSerializer.Deserialize<dynamic>(runOptions.ConfigurationFile);
@@ -222,7 +225,7 @@ namespace QualificationRunner.Core.Services
          var copiedIntroductionFilePath = absolutePathFrom(_runOptions.IntroFolder, fileName);
          fileInfo.CopyTo(copiedIntroductionFilePath, overwrite: true);
 
-         return new IntroFile {Path = pathRelativeToOutputFolder(copiedIntroductionFilePath) };
+         return new IntroFile {Path = pathRelativeToOutputFolder(copiedIntroductionFilePath)};
       }
 
       private static bool localFileExists(string file)

@@ -36,26 +36,30 @@ namespace QualificationRunner
 
       private static void startCommand<TRunOptions>(CLICommand<TRunOptions> command)
       {
-         var logger = initializeLogger(command);
+         var (logger, loggerFactory) = initializeLogger(command);
 
          logger.AddInfo($"Starting {command.Name.ToLower()}");
          logger.AddDebug($"Arguments:\n{command}");
-         
+
          var runner = IoC.Resolve<IBatchRunner<TRunOptions>>();
-         try
+
+         using (loggerFactory)
          {
-            runner.RunBatchAsync(command.ToRunOptions()).Wait();
-            logger.AddInfo($"{command.Name} finished");
-         }
-         catch (Exception e)
-         {
-            logger.AddException(e);
-            logger.AddError($"{command.Name} failed");
-            _valid = false;
+            try
+            {
+               runner.RunBatchAsync(command.ToRunOptions()).Wait();
+               logger.AddInfo($"{command.Name} finished");
+            }
+            catch (Exception e)
+            {
+               logger.AddException(e);
+               logger.AddError($"{command.Name} failed");
+               _valid = false;
+            }
          }
       }
 
-      private static ILogger initializeLogger(CLICommand runCommand)
+      private static (ILogger, ILoggerFactory) initializeLogger(CLICommand runCommand)
       {
          var loggerFactory = IoC.Resolve<ILoggerFactory>();
 
@@ -65,7 +69,7 @@ namespace QualificationRunner
          if (!string.IsNullOrEmpty(runCommand.LogFileFullPath))
             loggerFactory.AddFile(runCommand.LogFileFullPath, runCommand.LogLevel, runCommand.AppendToLog);
 
-         return IoC.Resolve<ILogger>();
+         return (IoC.Resolve<ILogger>(), loggerFactory);
       }
    }
 }
