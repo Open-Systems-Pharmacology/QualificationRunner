@@ -64,7 +64,7 @@ namespace QualificationRunner.Core.Services
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
 
-         _logger.AddDebug("Starting validation runs");
+         _logger.AddInfo("Starting validation runs...");
          var validations = await Task.WhenAll(projectConfigurations.Select(validateProject));
 
          var invalidConfigurations = validations.Where(x => !x.Success).ToList();
@@ -72,7 +72,7 @@ namespace QualificationRunner.Core.Services
             throw new QualificationRunException(errorMessageFrom(invalidConfigurations));
 
          //Run all qualification projects
-         _logger.AddDebug("Starting qualification runs");
+         _logger.AddInfo("Starting qualification runs...");
          var runResults = await Task.WhenAll(projectConfigurations.Select(runQualification));
          var invalidRunResults = runResults.Where(x => !x.Success).ToList();
          if (invalidRunResults.Any())
