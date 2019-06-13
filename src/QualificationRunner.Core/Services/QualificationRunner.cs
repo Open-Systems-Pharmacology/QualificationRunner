@@ -101,7 +101,7 @@ namespace QualificationRunner.Core.Services
                var fileFullPath = Path.Combine(downloadFolder, fileName);
 
                await wc.DownloadFileTaskAsync(url, fileFullPath);
-               _logger.AddDebug($"{type} file downloaded from {url}to {fileFullPath}");
+               _logger.AddDebug($"{type} file downloaded from {url }to {fileFullPath}");
                return fileFullPath;
             }
             catch (Exception e)
@@ -121,7 +121,7 @@ namespace QualificationRunner.Core.Services
 
          //Sections
          IReadOnlyList<Section> sections = retrieveSections(qualificationPlan);
-         staticFiles.Sections = await copySectionContents(sections.ToArray());
+         staticFiles.Sections = copySectionContents(sections.ToArray());
 
          //Observed Data
          IReadOnlyList<ObservedDataMapping> observedDataSets = getStaticObservedDataSetFrom(qualificationPlan);
@@ -163,22 +163,23 @@ namespace QualificationRunner.Core.Services
          };
       }
 
-      private Task<Section[]> copySectionContents(Section[] sections)
+      private Section[] copySectionContents(Section[] sections)
       {
+         // Not in parallel for now to ensure that we do not override files already downloaded as we are checking for file existence
          if (sections == null)
-            return Task.FromResult(Array.Empty<Section>());
+            return Array.Empty<Section>();
 
-         return Task.WhenAll(sections.Select(copySectionContent));
+         return sections.Select(copySectionContent).ToArray();
       }
 
-      private async Task<Section> copySectionContent(Section section)
+      private Section copySectionContent(Section section)
       {
          Task<string> downloadRemoteSectionContent() => downloadRemoteFile(section.Content, CONTENT_DOWNLOAD_FOLDER, "Content");
 
          var contentAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, section.Content);
 
          if (!localFileExists(contentAbsolutePath))
-            contentAbsolutePath = await downloadRemoteSectionContent();
+            contentAbsolutePath = downloadRemoteSectionContent().Result;
 
          if (!localFileExists(contentAbsolutePath))
             throw new QualificationRunException(ContentFileNotFound(contentAbsolutePath));
@@ -194,7 +195,7 @@ namespace QualificationRunner.Core.Services
             Id = section.Id,
             Title = section.Title,
             Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
-            Sections = await copySectionContents(section.Sections)
+            Sections =  copySectionContents(section.Sections)
          };
       }
 
