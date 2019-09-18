@@ -101,7 +101,7 @@ namespace QualificationRunner.Core.Services
                var fileFullPath = Path.Combine(downloadFolder, fileName);
 
                await wc.DownloadFileTaskAsync(url, fileFullPath);
-               _logger.AddDebug($"{type} file downloaded from {url }to {fileFullPath}");
+               _logger.AddDebug($"{type} file downloaded from {url}to {fileFullPath}");
                return fileFullPath;
             }
             catch (Exception e)
@@ -195,7 +195,7 @@ namespace QualificationRunner.Core.Services
             Id = section.Id,
             Title = section.Title,
             Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
-            Sections =  copySectionContents(section.Sections)
+            Sections = copySectionContents(section.Sections)
          };
       }
 
@@ -401,8 +401,30 @@ namespace QualificationRunner.Core.Services
       private IReadOnlyList<SimulationPlot> retrieveProjectPlots(dynamic reportConfiguration) =>
          GetListFrom<SimulationPlot>(reportConfiguration.Plots?.AllPlots);
 
-      private IReadOnlyList<Input> retrieveInputs(dynamic reportConfiguration) =>
-         GetListFrom<Input>(reportConfiguration.Inputs);
+      private IReadOnlyList<Input> retrieveInputs(dynamic qualificationPlan)
+      {
+         var sections = retrieveSections(qualificationPlan);
+         var inputs = GetListFrom<Input>(qualificationPlan.Inputs);
+         foreach (var input in inputs)
+         {
+            input.SectionLevel = getSectionLevel(sections, input.SectionId);
+         }
+
+         return inputs;
+      }
+
+      private int? getSectionLevel(IReadOnlyList<dynamic> sections, int sectionId, int currentLevel = 1)
+      {
+         if (sections == null)
+            return null;
+
+         var section = sections.FirstOrDefault(x => x.Id == sectionId);
+         if (section != null)
+            return currentLevel;
+
+         return sections.Select(x => getSectionLevel(x.Sections, sectionId, currentLevel + 1))
+            .FirstOrDefault(x => x != null);
+      }
 
       private IReadOnlyList<Section> retrieveSections(dynamic reportConfiguration) =>
          GetListFrom<Section>(reportConfiguration.Sections);
