@@ -101,7 +101,7 @@ namespace QualificationRunner.Core.Services
                var fileFullPath = Path.Combine(downloadFolder, fileName);
 
                await wc.DownloadFileTaskAsync(url, fileFullPath);
-               _logger.AddDebug($"{type} file downloaded from {url}to {fileFullPath}");
+               _logger.AddDebug($"{type} file downloaded from {url} to {fileFullPath}");
                return fileFullPath;
             }
             catch (Exception e)
