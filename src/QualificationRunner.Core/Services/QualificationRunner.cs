@@ -420,7 +420,7 @@ namespace QualificationRunner.Core.Services
 
          var section = sections.FirstOrDefault(x => x.Id == sectionId);
          if (section != null)
-            return currentLevel + 1;
+            return currentLevel + 1; //input sub-blocks should start 1 level deeper than the section level
 
          return sections.Select(x => getSectionLevel(x.Sections, sectionId, currentLevel + 1))
             .FirstOrDefault(x => x != null);
