@@ -420,7 +420,7 @@ namespace QualificationRunner.Core.Services
 
          var section = sections.FirstOrDefault(x => x.Id == sectionId);
          if (section != null)
-            return currentLevel;
+            return currentLevel + 1;
 
          return sections.Select(x => getSectionLevel(x.Sections, sectionId, currentLevel + 1))
             .FirstOrDefault(x => x != null);
