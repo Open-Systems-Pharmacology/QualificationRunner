@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <TargetFramework>net472</TargetFramework>
+    <Version>9.0.0</Version>
+    <PackageVersion>9.0.0</PackageVersion>
+    <AssemblyVersion>9.0.0</AssemblyVersion>
+    <FileVersion>9.0.0</FileVersion>
+    <InformationalVersion>9.0.0</InformationalVersion>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <Authors>Open-Systems-Pharmacology</Authors>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <OutputPath>bin\$(Configuration)</OutputPath>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\SolutionInfo.cs" Link="Properties\SolutionInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="OSPSuite.Core" Version="9.0.137" />
+    <PackageReference Include="OSPSuite.Assets.Images" Version="9.0.137" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="9.0.137" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="9.0.137" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Extensions.Options">
+      <HintPath>..\..\..\..\Users\Michael\.nuget\packages\microsoft.extensions.options\2.2.0\lib\netstandard2.0\Microsoft.Extensions.Options.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+
+</Project>

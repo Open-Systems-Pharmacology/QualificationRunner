@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29025.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QualificationRunner", "src\QualificationRunner\QualificationRunner.csproj", "{B6C742F4-3C6D-4446-BD51-BC103A8DBE47}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9C1F22FB-A434-4D83-B1E2-F2ED390DB10E}"
+	ProjectSection(SolutionItems) = preProject
+		appveyor-nightly.yml = appveyor-nightly.yml
+		rakefile.rb = rakefile.rb
+		SolutionInfo.cs = SolutionInfo.cs
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QualificationRunner.Core", "src\QualificationRunner.Core\QualificationRunner.Core.csproj", "{7F6B910D-9016-463E-BE2B-B8B6DDAF301D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6C742F4-3C6D-4446-BD51-BC103A8DBE47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6C742F4-3C6D-4446-BD51-BC103A8DBE47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6C742F4-3C6D-4446-BD51-BC103A8DBE47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6C742F4-3C6D-4446-BD51-BC103A8DBE47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F6B910D-9016-463E-BE2B-B8B6DDAF301D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F6B910D-9016-463E-BE2B-B8B6DDAF301D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F6B910D-9016-463E-BE2B-B8B6DDAF301D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F6B910D-9016-463E-BE2B-B8B6DDAF301D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4D00EB5C-2F50-4958-A886-CD13B606B69A}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,48 @@
+configuration: Debug
+image: Visual Studio 2019
+
+# hack until donet patching works with PR
+init:
+  - cmd: if DEFINED APPVEYOR_PULL_REQUEST_NUMBER (Set build_number=1) ELSE (Set build_number=%APPVEYOR_BUILD_NUMBER%)
+
+environment:
+  app_version: "9.0"
+  APPVEYOR_BLOCK_DOTNETCORE_TESTS_AUTORUN: true
+
+version: "$(app_version).{build}"
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  assembly_version: "$(app_version).$(build_number)"
+  file_version: "$(app_version).$(build_number)"
+  informational_version: "$(app_version).$(build_number)"
+
+install:
+- set PATH=C:\Ruby25\bin;%PATH%
+- git submodule update --init --recursive
+
+before_build:
+  - nuget sources add -name bddhelper -source https://ci.appveyor.com/nuget/ospsuite-bddhelper 
+  - nuget sources add -name utility -source https://ci.appveyor.com/nuget/ospsuite-utility 
+  - nuget sources add -name core -source https://ci.appveyor.com/nuget/ospsuite-core
+  - nuget sources add -name serializer -source https://ci.appveyor.com/nuget/ospsuite-serializer
+  - nuget sources add -name funcparser -source https://ci.appveyor.com/nuget/ospsuite-funcparser
+  - nuget sources add -name simmodel -source https://ci.appveyor.com/nuget/ospsuite-simmodel
+  - nuget sources add -name cvodes -source https://ci.appveyor.com/nuget/ospsuite-simmodel-solver-cvodes
+  - nuget restore
+
+after_build:
+  - rake "create_portable_setup[%APPVEYOR_BUILD_VERSION%, %CONFIGURATION%, qualificationrunner-portable-setup.zip]"
+
+build:
+  verbosity: minimal
+  project: QualificationRunner.sln
+
+notifications:
+  - provider: Slack
+    incoming_webhook:      
+      secure: 4MH9Em6TtrKalq6808dhPOqypTfYBJvVlqPaa9akNyF1h7st5qNdNezFp6T+bWXqrcZ4q/smtPcJ7LkUFHL46JDYUFlIL8FDz+ApX/vP+x0=
+
+on_finish: 
+  - ps: Get-ChildItem .\setup\*.zip | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
