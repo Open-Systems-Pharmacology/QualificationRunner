@@ -1,18 +1,18 @@
 configuration: Debug
 image: Visual Studio 2019
 
-environment:
-  app_version: "9.1"
-  APPVEYOR_BLOCK_DOTNETCORE_TESTS_AUTORUN: true
+version: '{build}'
 
-version: "$(app_version).{build}"
+init:
+- ps: Update-AppveyorBuild -Version "$($env:ospsuite_version).$($env:appveyor_build_version)"
 
 dotnet_csproj:
   patch: true
   file: '**\*.csproj'
-  assembly_version: "$(app_version).$(build_number)"
-  file_version: "$(app_version).$(build_number)"
-  informational_version: "$(app_version).$(build_number)"
+  version: '$(ospsuite_version).$(build_number)'
+  assembly_version: '$(ospsuite_version).$(build_number)'
+  file_version: '$(ospsuite_version).$(build_number)'
+  informational_version: '$(ospsuite_version).$(build_number)'
 
 install:
 - set PATH=C:\Ruby25\bin;%PATH%
