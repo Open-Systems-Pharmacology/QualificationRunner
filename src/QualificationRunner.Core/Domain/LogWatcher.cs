@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Extensions.Logging;
+using OSPSuite.Core.Services;
 using OSPSuite.Utility;
 using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.Services;
-using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner.Core.Domain
 {
@@ -16,14 +16,14 @@ namespace QualificationRunner.Core.Domain
 
    public class LogWatcher : ILogWatcher
    {
-      private readonly ILogger _logger;
+      private readonly IOSPSuiteLogger _logger;
       private readonly LogWatcherOptions _logWatcherOptions;
       private bool _disposed;
       private readonly List<FileSystemWatcher> _fileSystemWatchers;
       private StreamReader _sr;
       private FileSystemWatcher _logFileWatcher;
 
-      public LogWatcher(ILogger logger, LogWatcherOptions logWatcherOptions)
+      public LogWatcher(IOSPSuiteLogger logger, LogWatcherOptions logWatcherOptions)
       {
          _logger = logger;
          _logWatcherOptions = logWatcherOptions;
