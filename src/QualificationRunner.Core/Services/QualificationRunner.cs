@@ -24,11 +24,11 @@ namespace QualificationRunner.Core.Services
    public class QualificationRunner : IBatchRunner<QualificationRunOptions>
    {
       private readonly IJsonSerializer _jsonSerializer;
-      private readonly ILogger _logger;
+      private readonly IOSPSuiteLogger _logger;
       private readonly IQualificationEngineFactory _qualificationEngineFactory;
       private QualificationRunOptions _runOptions;
 
-      public QualificationRunner(IJsonSerializer jsonSerializer, ILogger logger, IQualificationEngineFactory qualificationEngineFactory)
+      public QualificationRunner(IJsonSerializer jsonSerializer, IOSPSuiteLogger logger, IQualificationEngineFactory qualificationEngineFactory)
       {
          _jsonSerializer = jsonSerializer;
          _logger = logger;

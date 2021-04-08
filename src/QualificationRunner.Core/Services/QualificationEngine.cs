@@ -11,7 +11,6 @@ using OSPSuite.Utility;
 using QualificationRunner.Core.Assets;
 using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.RunOptions;
-using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner.Core.Services
 {
@@ -48,14 +47,14 @@ namespace QualificationRunner.Core.Services
 
    public class QualificationEngine : IQualificationEngine
    {
-      private readonly ILogger _logger;
+      private readonly IOSPSuiteLogger _logger;
       private readonly IStartableProcessFactory _startableProcessFactory;
       private readonly IQualificationRunnerConfiguration _applicationConfiguration;
       private readonly IJsonSerializer _jsonSerializer;
       private readonly ILogWatcherFactory _logWatcherFactory;
 
       public QualificationEngine(
-         ILogger logger,
+         IOSPSuiteLogger logger,
          IStartableProcessFactory startableProcessFactory,
          IQualificationRunnerConfiguration applicationConfiguration,
          IJsonSerializer jsonSerializer, ILogWatcherFactory logWatcherFactory)
