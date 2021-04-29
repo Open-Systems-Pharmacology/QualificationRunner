@@ -114,7 +114,8 @@ namespace QualificationRunner.Core.Services
             "-l",
             logFile.InQuotes(),
             "--logLevel",
-            logLevel.ToString()
+            logLevel.ToString(),
+            "-r"
          };
 
          if (validate)
