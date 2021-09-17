@@ -26,8 +26,8 @@ namespace QualificationRunner.Commands
       [Option('p', "pksim", Required = false, HelpText = "Optional. Path of PK-Sim installation folder. If not specified, installation path will be read from registry (e.g required full install of PK-Sim via setup)")]
       public string PKSimInstallationFolder { get; set; }
 
-      [Option('r', "run", Required = false, HelpText = "Should the qualification runner also run the simulation or simply export the qualification report for further processing. Default is false")]
-      public bool Run { get; set; } = false;
+      [Option("norun", Required = false, HelpText = "Should the qualification runner by pass running the simulation. Default is false (e.g. it will run the simulations)")]
+      public bool NoRun { get; set; } = false;
 
       public override QualificationRunOptions ToRunOptions()
       {
@@ -41,7 +41,8 @@ namespace QualificationRunner.Commands
             PKSimInstallationFolder = PKSimInstallationFolder,
             LogLevel = LogLevel,
             LogFile = LogFileFullPath,
-            Run = Run
+            //TODO switch to RUN when we move to R
+            Run = !NoRun
          };
       }
 
@@ -52,6 +53,7 @@ namespace QualificationRunner.Commands
 
          sb.AppendLine($"Configuration file: {ConfigurationFile}");
          sb.AppendLine($"Output folder: {OutputFolder}");
+         sb.AppendLine($"Run Simulations: {!NoRun}");
 
          return sb.ToString();
       }
