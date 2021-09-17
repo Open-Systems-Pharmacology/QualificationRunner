@@ -98,13 +98,13 @@ namespace QualificationRunner.Core.Services
 
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, project, pksimCLIPath, cancellationToken);
+            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, project, pksimCLIPath, runOptions.Run, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
       }
 
-      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, string projectId, string pksimCLIPath, CancellationToken cancellationToken)
+      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, string projectId, string pksimCLIPath, bool run,  CancellationToken cancellationToken)
       {
          var args = new List<string>
          {
@@ -114,9 +114,11 @@ namespace QualificationRunner.Core.Services
             "-l",
             logFile.InQuotes(),
             "--logLevel",
-            logLevel.ToString(),
-            "-r"
+            logLevel.ToString()
          };
+
+         if(run)
+            args.Add("-r");
 
          if (validate)
             args.Add("-v");
