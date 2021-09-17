@@ -24,7 +24,10 @@ namespace QualificationRunner.Commands
       public string ReportConfigurationFileName { get; set; } = Constants.DEFAULT_REPORT_CONFIGURATION_PLAN_NAME;
 
       [Option('p', "pksim", Required = false, HelpText = "Optional. Path of PK-Sim installation folder. If not specified, installation path will be read from registry (e.g required full install of PK-Sim via setup)")]
-      public string PKSimInstallationFolder { get; set; } 
+      public string PKSimInstallationFolder { get; set; }
+
+      [Option('r', "run", Required = false, HelpText = "Should the qualification runner also run the simulation or simply export the qualification report for further processing. Default is false")]
+      public bool Run { get; set; } = false;
 
       public override QualificationRunOptions ToRunOptions()
       {
@@ -38,6 +41,7 @@ namespace QualificationRunner.Commands
             PKSimInstallationFolder = PKSimInstallationFolder,
             LogLevel = LogLevel,
             LogFile = LogFileFullPath,
+            Run = Run
          };
       }
 
