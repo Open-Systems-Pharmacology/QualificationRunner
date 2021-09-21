@@ -52,7 +52,7 @@ namespace QualificationRunner
             logger.AddException(e);
             logger.AddError($"{command.Name} failed");
             _valid = false;
-         }
+         } 
       }
 
       private static IOSPSuiteLogger initializeLogger(CLICommand runCommand)
@@ -63,9 +63,12 @@ namespace QualificationRunner
          loggerCreator.AddLoggingBuilderConfiguration(x => x.SetMinimumLevel(runCommand.LogLevel).AddConsole());
 
          if (!string.IsNullOrEmpty(runCommand.LogFileFullPath))
-            loggerCreator.AddLoggingBuilderConfiguration(builder => builder.AddFile(runCommand.LogFileFullPath));
+            loggerCreator.AddLoggingBuilderConfiguration(builder => builder.AddFile(runCommand.LogFileFullPath, runCommand.LogLevel));
 
-         return IoC.Resolve<IOSPSuiteLogger>();
+         var logger = IoC.Resolve<IOSPSuiteLogger>();
+         logger.DefaultCategoryName = "QualificationRunner";
+
+         return logger;
       }
    }
 }
