@@ -18,9 +18,9 @@ namespace QualificationRunner.Core.Services
    public class QualificationRunResult : IReferencingProject
    {
       /// <summary>
-      ///    Path of all the log files associated with the run
+      ///    Path of the log file associated only with the current run
       /// </summary>
-      public IEnumerable<string> LogFilePaths { get; set; }
+      public string LogFilePath { get; set; }
 
       /// <summary>
       ///    Path of the config file associated with the rin
@@ -75,13 +75,14 @@ namespace QualificationRunner.Core.Services
       {
          _logger.AddDebug(Logs.StartingQualificationRunForProject(qualifcationConfiguration.Project));
 
-         var logFilePaths = new List<string> {Path.Combine(qualifcationConfiguration.TempFolder, "log.txt"), runOptions.LogFile } ;
+         var projectLogFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
+         var logFilePaths = new List<string> { projectLogFile, runOptions.LogFile } ;
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
          var project = qualifcationConfiguration.Project;
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,
-            LogFilePaths = logFilePaths,
+            LogFilePath = projectLogFile,
             Project = project,
             MappingFile = qualifcationConfiguration.MappingFile
          };

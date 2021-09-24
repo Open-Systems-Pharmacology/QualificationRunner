@@ -63,7 +63,7 @@ namespace QualificationRunner
          loggerCreator.AddLoggingBuilderConfiguration(x => x.SetMinimumLevel(runCommand.LogLevel).AddConsole());
 
          if (!string.IsNullOrEmpty(runCommand.LogFileFullPath))
-            loggerCreator.AddLoggingBuilderConfiguration(builder => builder.AddFile(runCommand.LogFileFullPath, runCommand.LogLevel, true));
+            loggerCreator.AddLoggingBuilderConfiguration(builder => builder.AddFile(runCommand.LogFileFullPath, runCommand.LogLevel, shared: true));
 
          var logger = IoC.Resolve<IOSPSuiteLogger>();
          logger.DefaultCategoryName = "QualificationRunner";

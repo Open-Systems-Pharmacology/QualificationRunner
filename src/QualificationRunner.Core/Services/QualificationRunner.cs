@@ -135,7 +135,7 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
 
-      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, string.Join("\n", x.LogFilePaths))).ToString("\n");
+      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, x.LogFilePath)).ToString("\n");
 
       private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {
