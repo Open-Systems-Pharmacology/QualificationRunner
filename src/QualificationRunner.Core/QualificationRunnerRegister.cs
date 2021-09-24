@@ -29,7 +29,6 @@ namespace QualificationRunner.Core
 
          container.RegisterFactory<IQualificationEngineFactory>();
          container.RegisterFactory<IStartableProcessFactory>();
-         container.RegisterFactory<ILogWatcherFactory>();
       }
 
 

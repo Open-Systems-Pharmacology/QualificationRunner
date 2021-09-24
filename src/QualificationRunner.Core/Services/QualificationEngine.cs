@@ -52,19 +52,17 @@ namespace QualificationRunner.Core.Services
       private readonly IStartableProcessFactory _startableProcessFactory;
       private readonly IQualificationRunnerConfiguration _applicationConfiguration;
       private readonly IJsonSerializer _jsonSerializer;
-      private readonly ILogWatcherFactory _logWatcherFactory;
 
       public QualificationEngine(
          IOSPSuiteLogger logger,
          IStartableProcessFactory startableProcessFactory,
          IQualificationRunnerConfiguration applicationConfiguration,
-         IJsonSerializer jsonSerializer, ILogWatcherFactory logWatcherFactory)
+         IJsonSerializer jsonSerializer)
       {
          _logger = logger;
          _startableProcessFactory = startableProcessFactory;
          _applicationConfiguration = applicationConfiguration;
          _jsonSerializer = jsonSerializer;
-         _logWatcherFactory = logWatcherFactory;
       }
 
       public Task<QualificationRunResult> Validate(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
