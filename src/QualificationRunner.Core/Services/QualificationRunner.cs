@@ -135,7 +135,7 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
 
-      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, x.LogFile)).ToString("\n");
+      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, string.Join("\n", x.LogFilePaths))).ToString("\n");
 
       private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {
@@ -315,6 +315,7 @@ namespace QualificationRunner.Core.Services
             MappingFile = Path.Combine(tmpProjectFolder, "mapping.json"),
             SnapshotFile = project.SnapshotFilePath,
             TempFolder = tmpProjectFolder,
+            QRSharedLogPath = _runOptions.LogFile,
             BuildingBlocks = await mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
             SimulationPlots = allPlots.ForProject(projectId),
