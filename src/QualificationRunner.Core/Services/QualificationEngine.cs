@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -17,9 +18,9 @@ namespace QualificationRunner.Core.Services
    public class QualificationRunResult : IReferencingProject
    {
       /// <summary>
-      ///    Path of the log file associated with the run
+      ///    Path of the log file associated only with the current run
       /// </summary>
-      public string LogFile { get; set; }
+      public string LogFilePath { get; set; }
 
       /// <summary>
       ///    Path of the config file associated with the rin
@@ -51,19 +52,17 @@ namespace QualificationRunner.Core.Services
       private readonly IStartableProcessFactory _startableProcessFactory;
       private readonly IQualificationRunnerConfiguration _applicationConfiguration;
       private readonly IJsonSerializer _jsonSerializer;
-      private readonly ILogWatcherFactory _logWatcherFactory;
 
       public QualificationEngine(
          IOSPSuiteLogger logger,
          IStartableProcessFactory startableProcessFactory,
          IQualificationRunnerConfiguration applicationConfiguration,
-         IJsonSerializer jsonSerializer, ILogWatcherFactory logWatcherFactory)
+         IJsonSerializer jsonSerializer)
       {
          _logger = logger;
          _startableProcessFactory = startableProcessFactory;
          _applicationConfiguration = applicationConfiguration;
          _jsonSerializer = jsonSerializer;
-         _logWatcherFactory = logWatcherFactory;
       }
 
       public Task<QualificationRunResult> Validate(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
@@ -76,13 +75,14 @@ namespace QualificationRunner.Core.Services
       {
          _logger.AddDebug(Logs.StartingQualificationRunForProject(qualifcationConfiguration.Project));
 
-         var logFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
+         var projectLogFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
+         var logFilePaths = new List<string> { projectLogFile, runOptions.LogFile } ;
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
          var project = qualifcationConfiguration.Project;
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,
-            LogFile = logFile,
+            LogFilePath = projectLogFile,
             Project = project,
             MappingFile = qualifcationConfiguration.MappingFile
          };
@@ -98,21 +98,23 @@ namespace QualificationRunner.Core.Services
 
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFile, runOptions.LogLevel, validate, project, pksimCLIPath, runOptions.Run, cancellationToken);
+            var code = startBatchProcess(configFile, logFilePaths.ToList(), runOptions.LogLevel, validate, project, pksimCLIPath, runOptions.Run, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
       }
 
-      private ExitCodes startBatchProcess(string configFile, string logFile, LogLevel logLevel, bool validate, string projectId, string pksimCLIPath, bool run,  CancellationToken cancellationToken)
+      private ExitCodes startBatchProcess(string configFile, List<string> logFilePaths, LogLevel logLevel, bool validate, string projectId, string pksimCLIPath, bool run,  CancellationToken cancellationToken)
       {
+         var quotedPaths = logFilePaths.Select(element => element.InQuotes());
+
          var args = new List<string>
          {
             "qualification",
             "-i",
             configFile.InQuotes(),
             "-l",
-            logFile.InQuotes(),
+            string.Join(" ", quotedPaths),
             "--logLevel",
             logLevel.ToString()
          };
@@ -123,15 +125,8 @@ namespace QualificationRunner.Core.Services
          if (validate)
             args.Add("-v");
 
-         var logWatcherOptions = new LogWatcherOptions
-         {
-            LogFile = logFile,
-            Category = projectId,
-         };
          using (var process = _startableProcessFactory.CreateStartableProcess(pksimCLIPath, args.ToArray()))
-         using (var watcher = _logWatcherFactory.CreateLogWatcher(logWatcherOptions))
          {
-            watcher.Watch();
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.Start();
             process.Wait(cancellationToken);
