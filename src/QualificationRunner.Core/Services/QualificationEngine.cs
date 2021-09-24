@@ -75,7 +75,7 @@ namespace QualificationRunner.Core.Services
       {
          _logger.AddDebug(Logs.StartingQualificationRunForProject(qualifcationConfiguration.Project));
 
-         var logFilePaths = new List<string> {Path.Combine(qualifcationConfiguration.TempFolder, "log.txt"), qualifcationConfiguration.QRSharedLogPath } ;
+         var logFilePaths = new List<string> {Path.Combine(qualifcationConfiguration.TempFolder, "log.txt"), runOptions.LogFile } ;
          var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
          var project = qualifcationConfiguration.Project;
          var qualificationRunResult = new QualificationRunResult

@@ -315,7 +315,6 @@ namespace QualificationRunner.Core.Services
             MappingFile = Path.Combine(tmpProjectFolder, "mapping.json"),
             SnapshotFile = project.SnapshotFilePath,
             TempFolder = tmpProjectFolder,
-            QRSharedLogPath = _runOptions.LogFile,
             BuildingBlocks = await mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
             SimulationPlots = allPlots.ForProject(projectId),
