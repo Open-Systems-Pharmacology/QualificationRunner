@@ -2,12 +2,12 @@
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core;
 using OSPSuite.Core.Services;
+using OSPSuite.Infrastructure;
 using OSPSuite.Infrastructure.Container.Castle;
 using OSPSuite.Utility.Container;
 using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.RunOptions;
 using QualificationRunner.Core.Services;
-using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner.Core
 {
@@ -21,7 +21,6 @@ namespace QualificationRunner.Core
          {
             x.AssemblyContainingType<QualificationRunnerRegister>();
             x.ExcludeType<QualificationRunnerConfiguration>();
-            x.ExcludeType<QualificationRunnerLogger>();
             x.WithConvention(new OSPSuiteRegistrationConvention(registerConcreteType: true));
             x.RegisterAs(LifeStyle.Transient);
          });
@@ -30,20 +29,12 @@ namespace QualificationRunner.Core
 
          container.RegisterFactory<IQualificationEngineFactory>();
          container.RegisterFactory<IStartableProcessFactory>();
-         container.RegisterFactory<ILogWatcherFactory>();
       }
 
 
       private void registerCoreDependencies(IContainer container)
       {
        container.Register<StartableProcess, StartableProcess>();
-      }
-
-      private static void registerLogging(IContainer container)
-      {
-         var loggerFactory = new LoggerFactory();
-         container.RegisterImplementationOf((ILoggerFactory) loggerFactory);
-         container.Register<ILogger, QualificationRunnerLogger>(LifeStyle.Singleton);
       }
 
       public static IContainer Initialize()
@@ -56,7 +47,7 @@ namespace QualificationRunner.Core
          container.RegisterImplementationOf(container.DowncastTo<IContainer>());
          container.Register<IApplicationConfiguration, IQualificationRunnerConfiguration, QualificationRunnerConfiguration>(LifeStyle.Singleton);
 
-         registerLogging(container);
+         container.AddRegister(x => x.FromType<InfrastructureRegister>());
 
          return container;
       }

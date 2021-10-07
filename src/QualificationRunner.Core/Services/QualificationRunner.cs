@@ -24,11 +24,11 @@ namespace QualificationRunner.Core.Services
    public class QualificationRunner : IBatchRunner<QualificationRunOptions>
    {
       private readonly IJsonSerializer _jsonSerializer;
-      private readonly ILogger _logger;
+      private readonly IOSPSuiteLogger _logger;
       private readonly IQualificationEngineFactory _qualificationEngineFactory;
       private QualificationRunOptions _runOptions;
 
-      public QualificationRunner(IJsonSerializer jsonSerializer, ILogger logger, IQualificationEngineFactory qualificationEngineFactory)
+      public QualificationRunner(IJsonSerializer jsonSerializer, IOSPSuiteLogger logger, IQualificationEngineFactory qualificationEngineFactory)
       {
          _jsonSerializer = jsonSerializer;
          _logger = logger;
@@ -135,7 +135,7 @@ namespace QualificationRunner.Core.Services
 
       private IReadOnlyList<ObservedDataMapping> getStaticObservedDataSetFrom(dynamic qualificationPlan) => GetListFrom<ObservedDataMapping>(qualificationPlan.ObservedDataSets);
 
-      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, x.LogFile)).ToString("\n");
+      private string errorMessageFrom(IEnumerable<QualificationRunResult> invalidResults) => invalidResults.Select(x => ProjectConfigurationNotValid(x.Project, x.LogFilePath)).ToString("\n");
 
       private async Task<ObservedDataMapping> copyObservedData(ObservedDataMapping observedDataMapping)
       {

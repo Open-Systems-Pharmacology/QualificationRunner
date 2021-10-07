@@ -3,13 +3,12 @@ using System.Diagnostics;
 using CommandLine;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core.Services;
-using OSPSuite.Infrastructure.Logging;
+using OSPSuite.Infrastructure.Services;
 using OSPSuite.Utility.Container;
 using QualificationRunner.Bootstrap;
 using QualificationRunner.Commands;
 using QualificationRunner.Core.Domain;
 using QualificationRunner.Core.Services;
-using ILogger = OSPSuite.Core.Services.ILogger;
 
 namespace QualificationRunner
 {
@@ -36,40 +35,40 @@ namespace QualificationRunner
 
       private static void startCommand<TRunOptions>(CLICommand<TRunOptions> command)
       {
-         var (logger, loggerFactory) = initializeLogger(command);
+         var logger = initializeLogger(command);
 
          logger.AddInfo($"Starting {command.Name.ToLower()}");
          logger.AddDebug($"Arguments:\n{command}");
 
          var runner = IoC.Resolve<IBatchRunner<TRunOptions>>();
 
-         using (loggerFactory)
+         try
          {
-            try
-            {
-               runner.RunBatchAsync(command.ToRunOptions()).Wait();
-               logger.AddInfo($"{command.Name} finished");
-            }
-            catch (Exception e)
-            {
-               logger.AddException(e);
-               logger.AddError($"{command.Name} failed");
-               _valid = false;
-            }
+            runner.RunBatchAsync(command.ToRunOptions()).Wait();
+            logger.AddInfo($"{command.Name} finished");
          }
+         catch (Exception e)
+         {
+            logger.AddException(e);
+            logger.AddError($"{command.Name} failed");
+            _valid = false;
+         } 
       }
 
-      private static (ILogger, ILoggerFactory) initializeLogger(CLICommand runCommand)
+      private static IOSPSuiteLogger initializeLogger(CLICommand runCommand)
       {
-         var loggerFactory = IoC.Resolve<ILoggerFactory>();
+         var loggerCreator = IoC.Resolve<ILoggerCreator>();
 
-         loggerFactory
-            .AddConsole(runCommand.LogLevel);
+
+         loggerCreator.AddLoggingBuilderConfiguration(x => x.SetMinimumLevel(runCommand.LogLevel).AddConsole());
 
          if (!string.IsNullOrEmpty(runCommand.LogFileFullPath))
-            loggerFactory.AddFile(runCommand.LogFileFullPath, runCommand.LogLevel, runCommand.AppendToLog);
+            loggerCreator.AddLoggingBuilderConfiguration(builder => builder.AddFile(runCommand.LogFileFullPath, runCommand.LogLevel, shared: true));
 
-         return (IoC.Resolve<ILogger>(), loggerFactory);
+         var logger = IoC.Resolve<IOSPSuiteLogger>();
+         logger.DefaultCategoryName = "QualificationRunner";
+
+         return logger;
       }
    }
 }

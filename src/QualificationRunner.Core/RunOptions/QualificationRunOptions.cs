@@ -37,5 +37,10 @@ namespace QualificationRunner.Core.RunOptions
       public string ReportConfigurationFile => Path.Combine(OutputFolder, $"{ReportConfigurationFileName}.json");
 
       public string TempFolder => Path.Combine(OutputFolder, Constants.TEMP_FOLDER);
+
+      /// <summary>
+      ///    Should simulation be performed as part of the run?
+      /// </summary>
+      public bool Run { get; set; }
    }
 }
