@@ -402,9 +402,6 @@ namespace QualificationRunner.Core.Services
       private Plots retrieveProjectPlots(dynamic reportConfiguration) =>
          Cast<Plots>(reportConfiguration.Plots);
 
-      // private IReadOnlyList<SimulationPlot> retrieveProjectPlots(dynamic reportConfiguration) =>
-      //    GetListFrom<SimulationPlot>(reportConfiguration.Plots?.AllPlots);
-
       private IReadOnlyList<Input> retrieveInputs(dynamic qualificationPlan)
       {
          var sections = retrieveSections(qualificationPlan);
