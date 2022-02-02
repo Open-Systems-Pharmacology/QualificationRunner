@@ -319,11 +319,9 @@ namespace QualificationRunner.Core.Services
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
             SimulationPlots = plots?.AllPlots?.ForProject(projectId),
             Inputs = alInputs.ForProject(projectId),
-            Simulations =plots?.ReferencedSimulations(projectId)
+            Simulations = plots?.ReferencedSimulations(projectId)
          };
       }
-
-      
 
       private Task<BuildingBlockSwap[]> mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects)
       {
@@ -400,7 +398,6 @@ namespace QualificationRunner.Core.Services
             SnapshotFile = project.SnapshotFilePath
          };
       }
-
 
       private Plots retrieveProjectPlots(dynamic reportConfiguration) =>
          Cast<Plots>(reportConfiguration.Plots);

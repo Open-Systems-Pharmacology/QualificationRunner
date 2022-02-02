@@ -12,6 +12,7 @@ namespace QualificationRunner.Core.Domain
    public class PKRatioPlot : IReferencingSimulations
    {
       public PKRatioGroup[] Groups { get; set; }
+
       public IEnumerable<IReferencingSimulation> ReferencedSimulations => Groups?.SelectMany(x => x.PKRatios);
    }
 }

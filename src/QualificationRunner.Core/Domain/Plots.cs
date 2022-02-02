@@ -13,13 +13,11 @@ namespace QualificationRunner.Core.Domain
       public DDIRatioPlot[] DDIRatioPlots { get; set; }
       public PKRatioPlot[] PKRatioPlots { get; set; }
 
-
       public string[] ReferencedSimulations(string project)
       {
-
          var simulations = new List<string>();
          simulations.AddRange(namesFrom(AllPlots, project));
-         simulations.AddRange(namesFrom(GOFMergedPlots, project)); 
+         simulations.AddRange(namesFrom(GOFMergedPlots, project));
          simulations.AddRange(namesFrom(ComparisonTimeProfilePlots, project));
          simulations.AddRange(namesFrom(DDIRatioPlots, project));
          simulations.AddRange(namesFrom(PKRatioPlots, project));

@@ -13,6 +13,7 @@ namespace QualificationRunner.Core.Domain
    {
       public ReferencingSimulation SimulationControl { get; set; }
       public ReferencingSimulation SimulationDDI { get; set; }
+
       public IEnumerable<IReferencingSimulation> ReferencedSimulations => new[] {SimulationControl, SimulationDDI};
    }
 
