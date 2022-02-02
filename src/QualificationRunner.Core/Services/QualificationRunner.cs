@@ -51,7 +51,7 @@ namespace QualificationRunner.Core.Services
          if (projects == null)
             throw new QualificationRunException(ProjectsNotDefinedInQualificationFile);
 
-         IReadOnlyList<SimulationPlot> allPlots = retrieveProjectPlots(qualificationPlan);
+         Plots plots = retrieveProjectPlots(qualificationPlan);
          IReadOnlyList<Input> allInputs = retrieveInputs(qualificationPlan);
 
          var begin = DateTime.UtcNow;
@@ -59,7 +59,7 @@ namespace QualificationRunner.Core.Services
          await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
-         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, allPlots, allInputs)));
+         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, plots, allInputs)));
 
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
@@ -297,7 +297,7 @@ namespace QualificationRunner.Core.Services
          }
       }
 
-      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, IReadOnlyList<SimulationPlot> allPlots, IReadOnlyList<Input> alInputs)
+      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -317,10 +317,13 @@ namespace QualificationRunner.Core.Services
             TempFolder = tmpProjectFolder,
             BuildingBlocks = await mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
-            SimulationPlots = allPlots.ForProject(projectId),
-            Inputs = alInputs.ForProject(projectId)
+            SimulationPlots = plots?.AllPlots?.ForProject(projectId),
+            Inputs = alInputs.ForProject(projectId),
+            Simulations =plots?.ReferencedSimulations(projectId)
          };
       }
+
+      
 
       private Task<BuildingBlockSwap[]> mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects)
       {
@@ -398,8 +401,12 @@ namespace QualificationRunner.Core.Services
          };
       }
 
-      private IReadOnlyList<SimulationPlot> retrieveProjectPlots(dynamic reportConfiguration) =>
-         GetListFrom<SimulationPlot>(reportConfiguration.Plots?.AllPlots);
+
+      private Plots retrieveProjectPlots(dynamic reportConfiguration) =>
+         Cast<Plots>(reportConfiguration.Plots);
+
+      // private IReadOnlyList<SimulationPlot> retrieveProjectPlots(dynamic reportConfiguration) =>
+      //    GetListFrom<SimulationPlot>(reportConfiguration.Plots?.AllPlots);
 
       private IReadOnlyList<Input> retrieveInputs(dynamic qualificationPlan)
       {
