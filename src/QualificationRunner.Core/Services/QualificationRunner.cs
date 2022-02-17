@@ -130,6 +130,9 @@ namespace QualificationRunner.Core.Services
          //Intro files
          staticFiles.IntroFiles = await copyIntroFiles(qualificationPlan);
 
+         //Copy content subfolder as is
+         copyContentSubFolders();
+
          return staticFiles;
       }
 
@@ -170,6 +173,11 @@ namespace QualificationRunner.Core.Services
             return Array.Empty<Section>();
 
          return sections.Select(copySectionContent).ToArray();
+      }
+
+      private void copyContentSubFolders()
+      {
+         copySubDirectory(absolutePathFrom(_runOptions.ConfigurationFolder, CONTENT_FOLDER), _runOptions.ContentFolder);
       }
 
       private Section copySectionContent(Section section)
@@ -485,6 +493,39 @@ namespace QualificationRunner.Core.Services
          }
 
          return list;
+      }
+
+      private void copySubDirectory(string sourceDir, string destinationDir, bool copyFiles = false)
+      {
+         // Get information about the source directory
+         var dir = new DirectoryInfo(sourceDir);
+
+         // Check if the source directory exists
+         if (!dir.Exists)
+            return;
+
+         // Cache directories before we start copying
+         var dirs = dir.GetDirectories();
+
+         // Create the destination directory
+         DirectoryHelper.CreateDirectory(destinationDir);
+
+         if (copyFiles)
+         {
+            // Get the files in the source directory and copy to the destination directory
+            foreach (var file in dir.GetFiles())
+            {
+               var targetFilePath = Path.Combine(destinationDir, file.Name);
+               file.CopyTo(targetFilePath);
+            }
+         }
+
+         foreach (var subDir in dirs)
+         {
+            var newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+            //use true for copyFiles here as we want to copy all sub files after the first call
+            copySubDirectory(subDir.FullName, newDestinationDir, copyFiles: true);
+         }
       }
    }
 }
