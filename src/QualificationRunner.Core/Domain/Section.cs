@@ -2,7 +2,8 @@
 {
    public class Section
    {
-      public int Id { get; set; }
+      public int? Id { get; set; }
+      public string Reference { get; set; }
       public string Title { get; set; }
       public string Content { get; set; }
       public Section[] Sections { get; set; }

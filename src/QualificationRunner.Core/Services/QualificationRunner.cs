@@ -201,6 +201,7 @@ namespace QualificationRunner.Core.Services
          return new Section
          {
             Id = section.Id,
+            Reference = section.Reference,
             Title = section.Title,
             Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
             Sections = copySectionContents(section.Sections)
