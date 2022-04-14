@@ -182,6 +182,17 @@ namespace QualificationRunner.Core.Services
 
       private Section copySectionContent(Section section)
       {
+         var sectionWithRelativePath = new Section
+         {
+            Id = section.Id,
+            Reference = section.Reference,
+            Title = section.Title,
+            Sections = copySectionContents(section.Sections)
+         };
+
+         if (section.Content == null)
+            return sectionWithRelativePath;
+
          Task<string> downloadRemoteSectionContent() => downloadRemoteFile(section.Content, CONTENT_DOWNLOAD_FOLDER, "Content");
 
          var contentAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, section.Content);
@@ -198,14 +209,8 @@ namespace QualificationRunner.Core.Services
          var copiedContentDataFilePath = absolutePathFrom(_runOptions.ContentFolder, fileInfo.Name);
          fileInfo.CopyTo(copiedContentDataFilePath, overwrite: true);
 
-         return new Section
-         {
-            Id = section.Id,
-            Reference = section.Reference,
-            Title = section.Title,
-            Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
-            Sections = copySectionContents(section.Sections)
-         };
+         sectionWithRelativePath.Content = pathRelativeToOutputFolder(copiedContentDataFilePath);
+         return sectionWithRelativePath;
       }
 
       private Task<IntroFile[]> copyIntroFiles(dynamic qualificationPlan)
