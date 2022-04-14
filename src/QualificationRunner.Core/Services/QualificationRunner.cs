@@ -201,6 +201,7 @@ namespace QualificationRunner.Core.Services
          return new Section
          {
             Id = section.Id,
+            Reference = section.Reference,
             Title = section.Title,
             Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
             Sections = copySectionContents(section.Sections)
@@ -416,22 +417,22 @@ namespace QualificationRunner.Core.Services
          var inputs = GetListFrom<Input>(qualificationPlan.Inputs);
          foreach (var input in inputs)
          {
-            input.SectionLevel = getSectionLevel(sections, input.SectionId);
+            input.SectionLevel = getSectionLevel(sections, input.SectionId, input.SectionReference);
          }
 
          return inputs;
       }
 
-      private int? getSectionLevel(IReadOnlyList<dynamic> sections, int sectionId, int currentLevel = 1)
+      private int? getSectionLevel(IReadOnlyList<dynamic> sections, int? sectionId, string sectionReference, int currentLevel = 1)
       {
          if (sections == null)
             return null;
 
-         var section = sections.FirstOrDefault(x => x.Id == sectionId);
+         var section = sections.FirstOrDefault(x => x.Id == sectionId || x.Reference == sectionReference);
          if (section != null)
             return currentLevel + 1; //input sub-blocks should start 1 level deeper than the section level
 
-         return sections.Select(x => getSectionLevel(x.Sections, sectionId, currentLevel + 1))
+         return sections.Select(x => getSectionLevel(x.Sections, sectionId, sectionReference, currentLevel + 1))
             .FirstOrDefault(x => x != null);
       }
 
