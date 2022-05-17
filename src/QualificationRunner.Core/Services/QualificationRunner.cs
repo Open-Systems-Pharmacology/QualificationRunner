@@ -430,14 +430,22 @@ namespace QualificationRunner.Core.Services
 
       private int? getSectionLevel(IReadOnlyList<dynamic> sections, int? sectionId, string sectionReference, int currentLevel = 1)
       {
+         //no sections. nothing to see here
          if (sections == null)
             return null;
 
-         var section = sections.FirstOrDefault(x => x.Id == sectionId || x.Reference == sectionReference);
-         if (section != null)
-            return currentLevel + 1; //input sub-blocks should start 1 level deeper than the section level
+         //input sub-blocks should start 1 level deeper than the section level
+         var nextLevel = currentLevel + 1;
 
-         return sections.Select(x => getSectionLevel(x.Sections, sectionId, sectionReference, currentLevel + 1))
+         //We know with the schema that either sectionId or sectionReference is set.
+         var section = sectionId != null ? sections.FirstOrDefault(x => x.Id == sectionId) :
+            sections.FirstOrDefault(x => x.Reference == sectionReference);
+
+         if (section != null)
+            return nextLevel;
+
+         //Not found at that level, inspect children of current sections
+         return sections.Select(x => getSectionLevel(x.Sections, sectionId, sectionReference, nextLevel))
             .FirstOrDefault(x => x != null);
       }
 
