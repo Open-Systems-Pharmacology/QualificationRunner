@@ -51,7 +51,7 @@ namespace QualificationRunner.Core.Services
          if (projects == null)
             throw new QualificationRunException(ProjectsNotDefinedInQualificationFile);
 
-         IReadOnlyList<SimulationPlot> allPlots = retrieveProjectPlots(qualificationPlan);
+         Plots plots = retrieveProjectPlots(qualificationPlan);
          IReadOnlyList<Input> allInputs = retrieveInputs(qualificationPlan);
 
          var begin = DateTime.UtcNow;
@@ -59,7 +59,7 @@ namespace QualificationRunner.Core.Services
          await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
-         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, allPlots, allInputs)));
+         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, plots, allInputs)));
 
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
@@ -130,6 +130,9 @@ namespace QualificationRunner.Core.Services
          //Intro files
          staticFiles.IntroFiles = await copyIntroFiles(qualificationPlan);
 
+         //Copy content subfolder as is
+         copyContentSubFolders();
+
          return staticFiles;
       }
 
@@ -172,8 +175,24 @@ namespace QualificationRunner.Core.Services
          return sections.Select(copySectionContent).ToArray();
       }
 
+      private void copyContentSubFolders()
+      {
+         copySubDirectory(absolutePathFrom(_runOptions.ConfigurationFolder, CONTENT_FOLDER), _runOptions.ContentFolder);
+      }
+
       private Section copySectionContent(Section section)
       {
+         var sectionWithRelativePath = new Section
+         {
+            Id = section.Id,
+            Reference = section.Reference,
+            Title = section.Title,
+            Sections = copySectionContents(section.Sections)
+         };
+
+         if (section.Content == null)
+            return sectionWithRelativePath;
+
          Task<string> downloadRemoteSectionContent() => downloadRemoteFile(section.Content, CONTENT_DOWNLOAD_FOLDER, "Content");
 
          var contentAbsolutePath = absolutePathFrom(_runOptions.ConfigurationFolder, section.Content);
@@ -190,13 +209,8 @@ namespace QualificationRunner.Core.Services
          var copiedContentDataFilePath = absolutePathFrom(_runOptions.ContentFolder, fileInfo.Name);
          fileInfo.CopyTo(copiedContentDataFilePath, overwrite: true);
 
-         return new Section
-         {
-            Id = section.Id,
-            Title = section.Title,
-            Content = pathRelativeToOutputFolder(copiedContentDataFilePath),
-            Sections = copySectionContents(section.Sections)
-         };
+         sectionWithRelativePath.Content = pathRelativeToOutputFolder(copiedContentDataFilePath);
+         return sectionWithRelativePath;
       }
 
       private Task<IntroFile[]> copyIntroFiles(dynamic qualificationPlan)
@@ -297,7 +311,7 @@ namespace QualificationRunner.Core.Services
          }
       }
 
-      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, IReadOnlyList<SimulationPlot> allPlots, IReadOnlyList<Input> alInputs)
+      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -317,8 +331,9 @@ namespace QualificationRunner.Core.Services
             TempFolder = tmpProjectFolder,
             BuildingBlocks = await mapBuildingBlocks(project.BuildingBlocks, projects),
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
-            SimulationPlots = allPlots.ForProject(projectId),
-            Inputs = alInputs.ForProject(projectId)
+            SimulationPlots = plots?.AllPlots?.ForProject(projectId),
+            Inputs = alInputs.ForProject(projectId),
+            Simulations = plots?.ReferencedSimulations(projectId)
          };
       }
 
@@ -398,8 +413,8 @@ namespace QualificationRunner.Core.Services
          };
       }
 
-      private IReadOnlyList<SimulationPlot> retrieveProjectPlots(dynamic reportConfiguration) =>
-         GetListFrom<SimulationPlot>(reportConfiguration.Plots?.AllPlots);
+      private Plots retrieveProjectPlots(dynamic reportConfiguration) =>
+         Cast<Plots>(reportConfiguration.Plots);
 
       private IReadOnlyList<Input> retrieveInputs(dynamic qualificationPlan)
       {
@@ -407,22 +422,30 @@ namespace QualificationRunner.Core.Services
          var inputs = GetListFrom<Input>(qualificationPlan.Inputs);
          foreach (var input in inputs)
          {
-            input.SectionLevel = getSectionLevel(sections, input.SectionId);
+            input.SectionLevel = getSectionLevel(sections, input.SectionId, input.SectionReference);
          }
 
          return inputs;
       }
 
-      private int? getSectionLevel(IReadOnlyList<dynamic> sections, int sectionId, int currentLevel = 1)
+      private int? getSectionLevel(IReadOnlyList<dynamic> sections, int? sectionId, string sectionReference, int currentLevel = 1)
       {
+         //no sections. nothing to see here
          if (sections == null)
             return null;
 
-         var section = sections.FirstOrDefault(x => x.Id == sectionId);
-         if (section != null)
-            return currentLevel + 1; //input sub-blocks should start 1 level deeper than the section level
+         //input sub-blocks should start 1 level deeper than the section level
+         var nextLevel = currentLevel + 1;
 
-         return sections.Select(x => getSectionLevel(x.Sections, sectionId, currentLevel + 1))
+         //We know with the schema that either sectionId or sectionReference is set.
+         var section = sectionId != null ? sections.FirstOrDefault(x => x.Id == sectionId) :
+            sections.FirstOrDefault(x => x.Reference == sectionReference);
+
+         if (section != null)
+            return nextLevel;
+
+         //Not found at that level, inspect children of current sections
+         return sections.Select(x => getSectionLevel(x.Sections, sectionId, sectionReference, nextLevel))
             .FirstOrDefault(x => x != null);
       }
 
@@ -484,6 +507,39 @@ namespace QualificationRunner.Core.Services
          }
 
          return list;
+      }
+
+      private void copySubDirectory(string sourceDir, string destinationDir, bool copyFiles = false)
+      {
+         // Get information about the source directory
+         var dir = new DirectoryInfo(sourceDir);
+
+         // Check if the source directory exists
+         if (!dir.Exists)
+            return;
+
+         // Cache directories before we start copying
+         var dirs = dir.GetDirectories();
+
+         // Create the destination directory
+         DirectoryHelper.CreateDirectory(destinationDir);
+
+         if (copyFiles)
+         {
+            // Get the files in the source directory and copy to the destination directory
+            foreach (var file in dir.GetFiles())
+            {
+               var targetFilePath = Path.Combine(destinationDir, file.Name);
+               file.CopyTo(targetFilePath);
+            }
+         }
+
+         foreach (var subDir in dirs)
+         {
+            var newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+            //use true for copyFiles here as we want to copy all sub files after the first call
+            copySubDirectory(subDir.FullName, newDestinationDir, copyFiles: true);
+         }
       }
    }
 }

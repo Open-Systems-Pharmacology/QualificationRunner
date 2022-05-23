@@ -29,6 +29,9 @@ namespace QualificationRunner.Commands
       [Option("norun", Required = false, HelpText = "Should the qualification runner by pass running the simulation. Default is false (e.g. it will run the simulations)")]
       public bool NoRun { get; set; } = false;
 
+      [Option('e', "exp", Required = false, HelpText = "Should the qualification runner also export the project files (snapshot and PK-Sim project file). Default is false")]
+      public bool ExportProjectFiles { get; set; } = false;
+
       public override QualificationRunOptions ToRunOptions()
       {
          return new QualificationRunOptions
@@ -42,7 +45,8 @@ namespace QualificationRunner.Commands
             LogLevel = LogLevel,
             LogFile = LogFileFullPath,
             //TODO switch to RUN when we move to R
-            Run = !NoRun
+            Run = !NoRun,
+            ExportProjectFiles = ExportProjectFiles
          };
       }
 
@@ -53,7 +57,8 @@ namespace QualificationRunner.Commands
 
          sb.AppendLine($"Configuration file: {ConfigurationFile}");
          sb.AppendLine($"Output folder: {OutputFolder}");
-         sb.AppendLine($"Run Simulations: {!NoRun}");
+         sb.AppendLine($"Run simulations: {!NoRun}");
+         sb.AppendLine($"Export project files: {ExportProjectFiles}");
 
          return sb.ToString();
       }

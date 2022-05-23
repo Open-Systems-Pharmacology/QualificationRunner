@@ -15,22 +15,22 @@ namespace QualificationRunner.Core.RunOptions
       public string LogFile { get; set; }
 
       /// <summary>
-      /// This is the ObservedData folder that will be created in the output folder
+      ///    This is the ObservedData folder that will be created in the output folder
       /// </summary>
       public string ObservedDataFolder => Path.Combine(OutputFolder, Constants.OBSERVED_DATA_FOLDER);
 
       /// <summary>
-      /// This is the Input folder that will be created in the output folder
+      ///    This is the Input folder that will be created in the output folder
       /// </summary>
       public string InputsFolder => Path.Combine(OutputFolder, Constants.INPUTS_FOLDER);
 
       /// <summary>
-      /// This is the Content folder that will be created in the output folder
+      ///    This is the Content folder that will be created in the output folder
       /// </summary>
       public string ContentFolder => Path.Combine(OutputFolder, Constants.CONTENT_FOLDER);
 
       /// <summary>
-      /// This is the Intro folder that will be created in the output folder
+      ///    This is the Intro folder that will be created in the output folder
       /// </summary>
       public string IntroFolder => Path.Combine(OutputFolder, Constants.INTRO_FOLDER);
 
@@ -42,5 +42,10 @@ namespace QualificationRunner.Core.RunOptions
       ///    Should simulation be performed as part of the run?
       /// </summary>
       public bool Run { get; set; }
+
+      /// <summary>
+      ///    Should the qualification runner also export the project files (snapshot and PK-Sim project file).
+      /// </summary>
+      public bool ExportProjectFiles { get; set; }
    }
 }
