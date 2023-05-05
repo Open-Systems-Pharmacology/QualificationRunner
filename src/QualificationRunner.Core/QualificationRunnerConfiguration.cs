@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using Microsoft.Win32;
-using OSPSuite.Assets;
 using OSPSuite.Core;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Qualification;
@@ -22,7 +21,7 @@ namespace QualificationRunner.Core
       public override int InternalVersion { get; } = 1;
       public override Origin Product { get; } = Origins.Other;
       public override string ProductNameWithTrademark => Constants.PRODUCT_NAME_WITH_TRADEMARK;
-      public override string IconName { get; } = ApplicationIcons.Comparison.IconName;
+      public override string IconName { get; } = "Comparison";
       public override string UserSettingsFileName { get; } = "UserSettings.xml";
       public override string ApplicationSettingsFileName { get; } = "ApplicationSettings.xml";
       public override string IssueTrackerUrl { get; } = Constants.ISSUE_TRACKER_URL;
