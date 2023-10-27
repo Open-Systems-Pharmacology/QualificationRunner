@@ -1,5 +1,5 @@
 configuration: Debug
-image: Visual Studio 2019
+image: Visual Studio 2022
 
 version: '{build}'
 
@@ -36,3 +36,9 @@ build:
 
 on_finish: 
   - ps: Get-ChildItem .\setup\*.zip | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+  
+skip_tags: true
+
+skip_commits:
+  files:
+    - "**/*.md"
