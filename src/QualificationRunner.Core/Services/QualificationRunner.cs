@@ -107,7 +107,7 @@ namespace QualificationRunner.Core.Services
             catch (Exception e)
             {
                //Exception is thrown for example if the given url does not exist or if internet access is not possible etc..
-               _logger.AddError(e.Message);
+               _logger.AddError($"{e.Message} Url: {url}");
                return url;
             }
          }
