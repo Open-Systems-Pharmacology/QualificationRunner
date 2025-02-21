@@ -5,9 +5,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'
-  pull_request:
-    branches:
-    - develop
 
 env:
   MAJOR: 12
@@ -41,7 +38,7 @@ jobs:
 
   build-nightly:
     needs: get-latest-commit-timespan
-    # if: needs.get-latest-commit-timespan.outputs.LATEST_COMMIT_TIMESPAN < 86400
+    if: needs.get-latest-commit-timespan.outputs.LATEST_COMMIT_TIMESPAN < 86400
     runs-on: windows-latest
     steps:
       - name: Checkout code
