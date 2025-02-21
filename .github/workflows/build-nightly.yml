@@ -5,7 +5,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'
-
+  pull_request:
+    branches:
+    - develop
+    
 env:
   MAJOR: 12
   MINOR: 1
