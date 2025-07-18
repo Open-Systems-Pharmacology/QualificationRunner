@@ -48,6 +48,5 @@ namespace QualificationRunner.Core.RunOptions
       ///    Should the qualification runner also export the project files (snapshot and PK-Sim project file).
       /// </summary>
       public bool ExportProjectFiles { get; set; }
-
    }
 }

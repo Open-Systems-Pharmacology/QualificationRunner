@@ -35,10 +35,10 @@ namespace QualificationRunner.Core
       public override string WatermarkOptionLocation => "Options -> Settings -> Application";
       public override string ApplicationFolderPathName => Constants.APPLICATION_FOLDER_PATH;
 
-      public string MoBiCLIPathFor(string moBiInstallationFolder) => 
+      public string MoBiCLIPathFor(string moBiInstallationFolder) =>
          getMoBiCLIPathFor(string.IsNullOrEmpty(moBiInstallationFolder) ? retrieveMoBiInstallFolderPathFromRegistry() : moBiInstallationFolder);
 
-      public string PKSimCLIPathFor(string pksimInstallationFolder) => 
+      public string PKSimCLIPathFor(string pksimInstallationFolder) =>
          getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
 
       private string retrievePKSimInstallFolderPathFromRegistry() =>

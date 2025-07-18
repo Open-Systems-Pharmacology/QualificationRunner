@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using CommandLine;
 using OSPSuite.Utility;
 using QualificationRunner.Core;
@@ -36,10 +35,8 @@ namespace QualificationRunner.Commands
       [Option('m', "mobi", Required = false, HelpText = "Optional. Path of MoBi installation folder. If not specified, installation path will be read from registry (e.g required full install of MoBi via setup)")]
       public string MoBiInstallationFolder { get; set; }
 
-
       public override QualificationRunOptions ToRunOptions()
       {
-
          return new QualificationRunOptions
          {
             ConfigurationFile = ConfigurationFile,
