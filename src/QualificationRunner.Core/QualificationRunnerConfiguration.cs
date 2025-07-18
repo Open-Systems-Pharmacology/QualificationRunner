@@ -12,6 +12,7 @@ namespace QualificationRunner.Core
    public interface IQualificationRunnerConfiguration : IApplicationConfiguration
    {
       string PKSimCLIPathFor(string pksimInstallationFolder);
+      string MoBiCLIPathFor(string moBiInstallationFolder);
    }
 
    public class QualificationRunnerConfiguration : OSPSuiteConfiguration, IQualificationRunnerConfiguration
@@ -21,7 +22,6 @@ namespace QualificationRunner.Core
       public QualificationRunnerConfiguration() : base(Assembly.GetExecutingAssembly())
       {
       }
-
 
       //not used in this context
       public override int InternalVersion { get; } = 1;
@@ -35,12 +35,32 @@ namespace QualificationRunner.Core
       public override string WatermarkOptionLocation { get; } = "Options -> Settings -> Application";
       public override string ApplicationFolderPathName { get; } = Constants.APPLICATION_FOLDER_PATH;
 
+      public string MoBiCLIPathFor(string moBiInstallationFolder)
+      {
+         return getMoBiCLIPathFor(string.IsNullOrEmpty(moBiInstallationFolder) ? retrieveMoBiInstallFolderPathFromRegistry() : moBiInstallationFolder);
+      }
+
       public string PKSimCLIPathFor(string pksimInstallationFolder)
       {
          return getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
       }
 
-      private string retrievePKSimInstallFolderPathFromRegistry() => getRegistryValueForRegistryPathAndKey(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+      private string retrievePKSimInstallFolderPathFromRegistry() =>
+         retrieveInstallFolderPathFrom(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH);
+
+      private string retrieveMoBiInstallFolderPathFromRegistry()
+         => retrieveInstallFolderPathFrom(OSPSuite.Core.Domain.Constants.RegistryPaths.MOBI_REG_PATH);
+
+      private string retrieveInstallFolderPathFrom(string path) =>
+         getRegistryValueForRegistryPathAndKey(path, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+
+      private string getMoBiCLIPathFor(string moBiInstallationFolder)
+      {
+         if (string.IsNullOrEmpty(moBiInstallationFolder))
+            throw new QualificationRunException(Errors.MoBiInstallationFolderNotFound);
+
+         return Path.Combine(moBiInstallationFolder, Constants.Tools.MOBI_CLI);
+      }
 
       private string getPKSimCLIPathFor(string pksimInstallationFolder)
       {
@@ -54,13 +74,12 @@ namespace QualificationRunner.Core
       {
          try
          {
-            return (string) Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{Major}", installDir, null);
+            return (string)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{Major}", installDir, null);
          }
          catch (Exception)
          {
             return string.Empty;
          }
       }
-
    }
 }

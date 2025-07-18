@@ -1,4 +1,5 @@
 ﻿using OSPSuite.Core.Domain;
+using QualificationRunner.Core.RunOptions;
 
 namespace QualificationRunner.Core.Domain
 {
@@ -10,5 +11,6 @@ namespace QualificationRunner.Core.Domain
       public BuildingBlockRef[] BuildingBlocks { get; set; }
       public SimulationParameterRef[] SimulationParameters { get; set; }
       public string SnapshotFilePath { get; set; }
+      public ApplicationType Application { get; set; } = ApplicationType.PKSim;
    }
 }

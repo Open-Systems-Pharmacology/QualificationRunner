@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using CommandLine;
 using Microsoft.Extensions.Logging;
 using OSPSuite.Core.Services;

@@ -59,7 +59,12 @@ namespace QualificationRunner.Core.Services
          await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
-         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, plots, allInputs)));
+         var projectConfigurations = await Task.WhenAll(
+            projects.Select(p =>
+               createQualificationConfigurationFor(p, projects, plots, allInputs)
+                  .ContinueWith(t => (ProjectConfiguration: t.Result, Application: p.Application))
+            )
+         );
 
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
@@ -295,23 +300,23 @@ namespace QualificationRunner.Core.Services
 
       private JObject toJObject(object p) => _jsonSerializer.DeserializeFromString<dynamic>(_jsonSerializer.SerializeAsString(p));
 
-      private Task<QualificationRunResult> validateProject(QualifcationConfiguration qualificationConfiguration)
+      private Task<QualificationRunResult> validateProject((QualificationConfiguration ProjectConfiguration, ApplicationType Application) input)
       {
          using (var qualificationEngine = _qualificationEngineFactory.Create())
          {
-            return qualificationEngine.Validate(qualificationConfiguration, _runOptions, CancellationToken.None);
+            return qualificationEngine.Validate(input.ProjectConfiguration, _runOptions,input.Application, CancellationToken.None);
          }
       }
 
-      private Task<QualificationRunResult> runQualification(QualifcationConfiguration qualificationConfiguration)
+      private Task<QualificationRunResult> runQualification((QualificationConfiguration ProjectConfiguration, ApplicationType Application) input)
       {
          using (var qualificationEngine = _qualificationEngineFactory.Create())
          {
-            return qualificationEngine.Run(qualificationConfiguration, _runOptions, CancellationToken.None);
+            return qualificationEngine.Run(input.ProjectConfiguration, _runOptions, input.Application, CancellationToken.None);
          }
       }
 
-      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
+      private async Task<QualificationConfiguration> createQualificationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -319,7 +324,7 @@ namespace QualificationRunner.Core.Services
 
          DirectoryHelper.CreateDirectory(tmpProjectFolder);
 
-         return new QualifcationConfiguration
+         return new QualificationConfiguration
          {
             Project = projectId,
             OutputFolder = _runOptions.OutputFolder,
