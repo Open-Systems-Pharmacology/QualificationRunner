@@ -24,26 +24,22 @@ namespace QualificationRunner.Core
       }
 
       //not used in this context
-      public override int InternalVersion { get; } = 1;
+      public override int InternalVersion => 1;
       public override Origin Product { get; } = Origins.Other;
       public override string ProductNameWithTrademark => Constants.PRODUCT_NAME_WITH_TRADEMARK;
-      public override string IconName { get; } = "Comparison";
-      public override string UserSettingsFileName { get; } = "UserSettings.xml";
-      public override string ApplicationSettingsFileName { get; } = "ApplicationSettings.xml";
-      public override string IssueTrackerUrl { get; } = Constants.ISSUE_TRACKER_URL;
+      public override string IconName => "Comparison";
+      public override string UserSettingsFileName => "UserSettings.xml";
+      public override string ApplicationSettingsFileName => "ApplicationSettings.xml";
+      public override string IssueTrackerUrl => Constants.ISSUE_TRACKER_URL;
       protected override string[] LatestVersionWithOtherMajor { get; } = Array.Empty<string>();
-      public override string WatermarkOptionLocation { get; } = "Options -> Settings -> Application";
-      public override string ApplicationFolderPathName { get; } = Constants.APPLICATION_FOLDER_PATH;
+      public override string WatermarkOptionLocation => "Options -> Settings -> Application";
+      public override string ApplicationFolderPathName => Constants.APPLICATION_FOLDER_PATH;
 
-      public string MoBiCLIPathFor(string moBiInstallationFolder)
-      {
-         return getMoBiCLIPathFor(string.IsNullOrEmpty(moBiInstallationFolder) ? retrieveMoBiInstallFolderPathFromRegistry() : moBiInstallationFolder);
-      }
+      public string MoBiCLIPathFor(string moBiInstallationFolder) => 
+         getMoBiCLIPathFor(string.IsNullOrEmpty(moBiInstallationFolder) ? retrieveMoBiInstallFolderPathFromRegistry() : moBiInstallationFolder);
 
-      public string PKSimCLIPathFor(string pksimInstallationFolder)
-      {
-         return getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
-      }
+      public string PKSimCLIPathFor(string pksimInstallationFolder) => 
+         getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
 
       private string retrievePKSimInstallFolderPathFromRegistry() =>
          retrieveInstallFolderPathFrom(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH);

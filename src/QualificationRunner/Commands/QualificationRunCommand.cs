@@ -51,6 +51,7 @@ namespace QualificationRunner.Commands
             MoBiInstallationFolder = MoBiInstallationFolder,
             LogLevel = LogLevel,
             LogFile = LogFileFullPath,
+            //TODO switch to RUN when we move to R
             Run = !NoRun,
             ExportProjectFiles = ExportProjectFiles
          };

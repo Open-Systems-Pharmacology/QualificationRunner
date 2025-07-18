@@ -50,5 +50,4 @@ namespace QualificationRunner.Core.RunOptions
       public bool ExportProjectFiles { get; set; }
 
    }
-   public enum ApplicationType { PKSim, MoBi }
 }

@@ -59,18 +59,13 @@ namespace QualificationRunner.Core.Services
          await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
-         var projectConfigurations = await Task.WhenAll(
-            projects.Select(p =>
-               createQualificationConfigurationFor(p, projects, plots, allInputs)
-                  .ContinueWith(t => (ProjectConfiguration: t.Result, Application: p.Application))
-            )
-         );
+         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualificationConfigurationFor(p, projects, plots, allInputs)));
 
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
 
          _logger.AddInfo("Starting validation runs...");
-         var validations = await Task.WhenAll(projectConfigurations.Select(validateProject));
+         var validations = await Task.WhenAll(projectConfigurations.Select(x => validateProject(x.qualificationConfiguration, x.application)));
 
          var invalidConfigurations = validations.Where(x => !x.Success).ToList();
          if (invalidConfigurations.Any())
@@ -78,7 +73,7 @@ namespace QualificationRunner.Core.Services
 
          //Run all qualification projects
          _logger.AddInfo("Starting qualification runs...");
-         var runResults = await Task.WhenAll(projectConfigurations.Select(runQualification));
+         var runResults = await Task.WhenAll(projectConfigurations.Select(x => runQualification(x.qualificationConfiguration, x.application)));
          var invalidRunResults = runResults.Where(x => !x.Success).ToList();
          if (invalidRunResults.Any())
             throw new QualificationRunException(errorMessageFrom(invalidRunResults));
@@ -245,7 +240,7 @@ namespace QualificationRunner.Core.Services
          var copiedIntroductionFilePath = absolutePathFrom(_runOptions.IntroFolder, fileName);
          fileInfo.CopyTo(copiedIntroductionFilePath, overwrite: true);
 
-         return new IntroFile {Path = pathRelativeToOutputFolder(copiedIntroductionFilePath)};
+         return new IntroFile { Path = pathRelativeToOutputFolder(copiedIntroductionFilePath) };
       }
 
       private static bool localFileExists(string file)
@@ -300,23 +295,23 @@ namespace QualificationRunner.Core.Services
 
       private JObject toJObject(object p) => _jsonSerializer.DeserializeFromString<dynamic>(_jsonSerializer.SerializeAsString(p));
 
-      private Task<QualificationRunResult> validateProject((QualificationConfiguration ProjectConfiguration, ApplicationType Application) input)
+      private Task<QualificationRunResult> validateProject(QualificationConfiguration configuration, ApplicationType application)
       {
          using (var qualificationEngine = _qualificationEngineFactory.Create())
          {
-            return qualificationEngine.Validate(input.ProjectConfiguration, _runOptions,input.Application, CancellationToken.None);
+            return qualificationEngine.Validate(configuration, _runOptions, application, CancellationToken.None);
          }
       }
 
-      private Task<QualificationRunResult> runQualification((QualificationConfiguration ProjectConfiguration, ApplicationType Application) input)
+      private Task<QualificationRunResult> runQualification(QualificationConfiguration configuration, ApplicationType application)
       {
          using (var qualificationEngine = _qualificationEngineFactory.Create())
          {
-            return qualificationEngine.Run(input.ProjectConfiguration, _runOptions, input.Application, CancellationToken.None);
+            return qualificationEngine.Run(configuration, _runOptions, application, CancellationToken.None);
          }
       }
 
-      private async Task<QualificationConfiguration> createQualificationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
+      private async Task<(QualificationConfiguration qualificationConfiguration, ApplicationType application)> createQualificationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -324,7 +319,7 @@ namespace QualificationRunner.Core.Services
 
          DirectoryHelper.CreateDirectory(tmpProjectFolder);
 
-         return new QualificationConfiguration
+         return (new QualificationConfiguration
          {
             Project = projectId,
             OutputFolder = _runOptions.OutputFolder,
@@ -339,7 +334,7 @@ namespace QualificationRunner.Core.Services
             SimulationPlots = plots?.AllPlots?.ForProject(projectId),
             Inputs = alInputs.ForProject(projectId),
             Simulations = plots?.ReferencedSimulations(projectId)
-         };
+         }, project.Application);
       }
 
       private Task<BuildingBlockSwap[]> mapBuildingBlocks(BuildingBlockRef[] buildingBlocks, IReadOnlyList<Project> projects)
@@ -443,8 +438,7 @@ namespace QualificationRunner.Core.Services
          var nextLevel = currentLevel + 1;
 
          //We know with the schema that either sectionId or sectionReference is set.
-         var section = sectionId != null ? sections.FirstOrDefault(x => x.Id == sectionId) :
-            sections.FirstOrDefault(x => x.Reference == sectionReference);
+         var section = sectionId != null ? sections.FirstOrDefault(x => x.Id == sectionId) : sections.FirstOrDefault(x => x.Reference == sectionReference);
 
          if (section != null)
             return nextLevel;
