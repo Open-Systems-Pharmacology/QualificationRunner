@@ -1,4 +1,5 @@
 ﻿using OSPSuite.Core.Domain;
+using OSPSuite.Core.Qualification;
 using QualificationRunner.Core.RunOptions;
 
 namespace QualificationRunner.Core.Domain

@@ -17,8 +17,8 @@ namespace QualificationRunner.Core.Services
 {
    public interface IQualificationEngine : IDisposable
    {
-      Task<QualificationRunResult> Run(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, ApplicationType application, CancellationToken cancellationToken);
-      Task<QualificationRunResult> Validate(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, ApplicationType application, CancellationToken cancellationToken);
+      Task<QualificationRunResult> Run(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken);
+      Task<QualificationRunResult> Validate(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken);
    }
 
    public class QualificationEngine : IQualificationEngine
@@ -40,13 +40,13 @@ namespace QualificationRunner.Core.Services
          _jsonSerializer = jsonSerializer;
       }
 
-      public Task<QualificationRunResult> Validate(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, ApplicationType application, CancellationToken cancellationToken) =>
-         execute(qualificationConfiguration, runOptions, application, cancellationToken, validate: true);
+      public Task<QualificationRunResult> Validate(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
+         execute(qualificationConfiguration, runOptions, cancellationToken, validate: true);
 
-      public Task<QualificationRunResult> Run(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, ApplicationType application, CancellationToken cancellationToken) =>
-         execute(qualificationConfiguration, runOptions, application, cancellationToken, validate: false);
+      public Task<QualificationRunResult> Run(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
+         execute(qualificationConfiguration, runOptions, cancellationToken, validate: false);
 
-      private async Task<QualificationRunResult> execute(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, ApplicationType application, CancellationToken cancellationToken, bool validate)
+      private async Task<QualificationRunResult> execute(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken, bool validate)
       {
          _logger.AddDebug(Logs.StartingQualificationRunForProject(qualificationConfiguration.Project));
 
@@ -66,7 +66,7 @@ namespace QualificationRunner.Core.Services
 
          _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(project, configFile));
 
-         var cliPath = application == ApplicationType.PKSim
+         var cliPath = qualificationConfiguration.Application == ApplicationType.PKSim
             ? _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder)
             : _applicationConfiguration.MoBiCLIPathFor(runOptions.MoBiInstallationFolder);
 

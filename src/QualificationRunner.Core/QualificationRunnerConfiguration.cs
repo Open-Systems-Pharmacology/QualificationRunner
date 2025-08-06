@@ -6,6 +6,7 @@ using OSPSuite.Core;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Qualification;
 using QualificationRunner.Core.Assets;
+using static OSPSuite.Core.Domain.Constants.RegistryPaths;
 
 namespace QualificationRunner.Core
 {
@@ -42,13 +43,13 @@ namespace QualificationRunner.Core
          getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
 
       private string retrievePKSimInstallFolderPathFromRegistry() =>
-         retrieveInstallFolderPathFrom(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH);
+         retrieveInstallFolderPathFrom(PKSIM_REG_PATH);
 
       private string retrieveMoBiInstallFolderPathFromRegistry()
-         => retrieveInstallFolderPathFrom(OSPSuite.Core.Domain.Constants.RegistryPaths.MOBI_REG_PATH);
+         => retrieveInstallFolderPathFrom(MOBI_REG_PATH);
 
       private string retrieveInstallFolderPathFrom(string path) =>
-         getRegistryValueForRegistryPathAndKey(path, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+         getRegistryValueForRegistryPathAndKey(path, INSTALL_DIR);
 
       private string getMoBiCLIPathFor(string moBiInstallationFolder)
       {
