@@ -6,12 +6,14 @@ using OSPSuite.Core;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Qualification;
 using QualificationRunner.Core.Assets;
+using static OSPSuite.Core.Domain.Constants.RegistryPaths;
 
 namespace QualificationRunner.Core
 {
    public interface IQualificationRunnerConfiguration : IApplicationConfiguration
    {
       string PKSimCLIPathFor(string pksimInstallationFolder);
+      string MoBiCLIPathFor(string moBiInstallationFolder);
    }
 
    public class QualificationRunnerConfiguration : OSPSuiteConfiguration, IQualificationRunnerConfiguration
@@ -22,25 +24,40 @@ namespace QualificationRunner.Core
       {
       }
 
-
       //not used in this context
-      public override int InternalVersion { get; } = 1;
+      public override int InternalVersion => 1;
       public override Origin Product { get; } = Origins.Other;
       public override string ProductNameWithTrademark => Constants.PRODUCT_NAME_WITH_TRADEMARK;
-      public override string IconName { get; } = "Comparison";
-      public override string UserSettingsFileName { get; } = "UserSettings.xml";
-      public override string ApplicationSettingsFileName { get; } = "ApplicationSettings.xml";
-      public override string IssueTrackerUrl { get; } = Constants.ISSUE_TRACKER_URL;
+      public override string IconName => "Comparison";
+      public override string UserSettingsFileName => "UserSettings.xml";
+      public override string ApplicationSettingsFileName => "ApplicationSettings.xml";
+      public override string IssueTrackerUrl => Constants.ISSUE_TRACKER_URL;
       protected override string[] LatestVersionWithOtherMajor { get; } = Array.Empty<string>();
-      public override string WatermarkOptionLocation { get; } = "Options -> Settings -> Application";
-      public override string ApplicationFolderPathName { get; } = Constants.APPLICATION_FOLDER_PATH;
+      public override string WatermarkOptionLocation => "Options -> Settings -> Application";
+      public override string ApplicationFolderPathName => Constants.APPLICATION_FOLDER_PATH;
 
-      public string PKSimCLIPathFor(string pksimInstallationFolder)
+      public string MoBiCLIPathFor(string moBiInstallationFolder) =>
+         getMoBiCLIPathFor(string.IsNullOrEmpty(moBiInstallationFolder) ? retrieveMoBiInstallFolderPathFromRegistry() : moBiInstallationFolder);
+
+      public string PKSimCLIPathFor(string pksimInstallationFolder) =>
+         getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
+
+      private string retrievePKSimInstallFolderPathFromRegistry() =>
+         retrieveInstallFolderPathFrom(PKSIM_REG_PATH);
+
+      private string retrieveMoBiInstallFolderPathFromRegistry()
+         => retrieveInstallFolderPathFrom(MOBI_REG_PATH);
+
+      private string retrieveInstallFolderPathFrom(string path) =>
+         getRegistryValueForRegistryPathAndKey(path, INSTALL_DIR);
+
+      private string getMoBiCLIPathFor(string moBiInstallationFolder)
       {
-         return getPKSimCLIPathFor(string.IsNullOrEmpty(pksimInstallationFolder) ? retrievePKSimInstallFolderPathFromRegistry() : pksimInstallationFolder);
-      }
+         if (string.IsNullOrEmpty(moBiInstallationFolder))
+            throw new QualificationRunException(Errors.MoBiInstallationFolderNotFound);
 
-      private string retrievePKSimInstallFolderPathFromRegistry() => getRegistryValueForRegistryPathAndKey(OSPSuite.Core.Domain.Constants.RegistryPaths.PKSIM_REG_PATH, OSPSuite.Core.Domain.Constants.RegistryPaths.INSTALL_DIR);
+         return Path.Combine(moBiInstallationFolder, Constants.Tools.MOBI_CLI);
+      }
 
       private string getPKSimCLIPathFor(string pksimInstallationFolder)
       {
@@ -54,13 +71,12 @@ namespace QualificationRunner.Core
       {
          try
          {
-            return (string) Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{Major}", installDir, null);
+            return (string)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\{openSystemsPharmacology}{Major}", installDir, null);
          }
          catch (Exception)
          {
             return string.Empty;
          }
       }
-
    }
 }

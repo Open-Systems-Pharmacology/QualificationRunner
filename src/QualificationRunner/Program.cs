@@ -28,9 +28,9 @@ namespace QualificationRunner
             Console.ReadLine();
 
          if (!_valid)
-            return (int) ExitCodes.Error;
+            return (int)ExitCodes.Error;
 
-         return (int) ExitCodes.Success;
+         return (int)ExitCodes.Success;
       }
 
       private static void startCommand<TRunOptions>(CLICommand<TRunOptions> command)
@@ -52,7 +52,7 @@ namespace QualificationRunner
             logger.AddException(e);
             logger.AddError($"{command.Name} failed");
             _valid = false;
-         } 
+         }
       }
 
       private static IOSPSuiteLogger initializeLogger(CLICommand runCommand)

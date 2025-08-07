@@ -25,6 +25,7 @@ namespace QualificationRunner.Core
       {
          public static readonly string PKSIM_CLI = "PKSim.CLI.exe";
          public static readonly string BATCH_LOG = "batch.log";
+         public static readonly string MOBI_CLI = "MoBi.CLI.exe";
       }
 
       public static class Configuration
