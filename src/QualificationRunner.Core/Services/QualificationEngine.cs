@@ -66,22 +66,34 @@ namespace QualificationRunner.Core.Services
 
          _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(project, configFile));
 
-         var cliPath = qualificationConfiguration.Application == ApplicationType.PKSim
-            ? _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder)
-            : _applicationConfiguration.MoBiCLIPathFor(runOptions.MoBiInstallationFolder);
+         string cliPath, moBiPKSimStarterPath = string.Empty;
+         if (qualificationConfiguration.Application == ApplicationType.PKSim)
+            cliPath = _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder);
+         else
+         {
+
+            cliPath = _applicationConfiguration.MoBiCLIPathFor(runOptions.MoBiInstallationFolder);
+            
+            // If the PK-Sim folder was specified by command line argument the intent is to inform MoBi which PK-Sim instance
+            // should be used for PK-Sim services.
+            if (!string.IsNullOrEmpty(runOptions.PKSimInstallationFolder))
+               moBiPKSimStarterPath = Path.Combine(runOptions.PKSimInstallationFolder, Constants.Tools.PKSIM);
+         }
 
          if (!FileHelper.FileExists(cliPath))
             throw new QualificationRunException(Errors.CliFileNotFound(cliPath));
 
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFilePaths.ToList(), runOptions.LogLevel, validate, cliPath, runOptions.Run, runOptions.ExportProjectFiles, cancellationToken);
+            var args = createArgs(configFile, logFilePaths.ToList(), runOptions.LogLevel, validate, runOptions.Run, runOptions.ExportProjectFiles, moBiPKSimStarterPath);
+            
+            var code = startBatchProcess(args, cliPath, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
       }
 
-      private ExitCodes startBatchProcess(string configFile, List<string> logFilePaths, LogLevel logLevel, bool validate, string cliPath, bool run, bool exportProjectFiles, CancellationToken cancellationToken)
+      private static List<string> createArgs(string configFile, List<string> logFilePaths, LogLevel logLevel, bool validate, bool run, bool exportProjectFiles, string pkSimPath)
       {
          var quotedPaths = logFilePaths.Select(element => element.InQuotes());
 
@@ -105,6 +117,14 @@ namespace QualificationRunner.Core.Services
          if (validate)
             args.Add("-v");
 
+         if (!string.IsNullOrEmpty(pkSimPath))
+            args.AddRange(new[] { "-p", pkSimPath });
+
+         return args;
+      }
+
+      private ExitCodes startBatchProcess(List<string> args, string cliPath, CancellationToken cancellationToken)
+      {
          using (var process = _startableProcessFactory.CreateStartableProcess(cliPath, args.ToArray()))
          {
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
