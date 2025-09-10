@@ -71,9 +71,8 @@ namespace QualificationRunner.Core.Services
             cliPath = _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder);
          else
          {
-
             cliPath = _applicationConfiguration.MoBiCLIPathFor(runOptions.MoBiInstallationFolder);
-            
+
             // If the PK-Sim folder was specified by command line argument the intent is to inform MoBi which PK-Sim instance
             // should be used for PK-Sim services.
             if (!string.IsNullOrEmpty(runOptions.PKSimInstallationFolder))
@@ -86,7 +85,7 @@ namespace QualificationRunner.Core.Services
          return await Task.Run(() =>
          {
             var args = createArgs(configFile, logFilePaths.ToList(), runOptions.LogLevel, validate, runOptions.Run, runOptions.ExportProjectFiles, moBiPKSimStarterPath);
-            
+
             var code = startBatchProcess(args, cliPath, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
@@ -128,7 +127,7 @@ namespace QualificationRunner.Core.Services
          using (var process = _startableProcessFactory.CreateStartableProcess(cliPath, args.ToArray()))
          {
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            process.Start();
+            process.Start(ProcessPriorityClass.Idle);
             process.Wait(cancellationToken);
             return (ExitCodes)process.ReturnCode;
          }

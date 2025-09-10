@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -13,6 +13,7 @@ using OSPSuite.Core.Services;
 using OSPSuite.Utility;
 using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.Domain;
+using QualificationRunner.Core.Extensions;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
 using static QualificationRunner.Core.Constants;
@@ -93,14 +94,15 @@ namespace QualificationRunner.Core.Services
          var downloadFolder = Path.Combine(_runOptions.TempFolder, locationInTempFolder);
          DirectoryHelper.CreateDirectory(downloadFolder);
 
-         using (var wc = new WebClient())
+         using (var wc = new HttpClient())
          {
             try
             {
-               var fileName = new Uri(url).Segments.Last();
+               var uri = new Uri(url);
+               var fileName = uri.Segments.Last();
                var fileFullPath = Path.Combine(downloadFolder, fileName);
 
-               await wc.DownloadFileTaskAsync(url, fileFullPath);
+               await wc.DownloadFileTaskAsync(uri, fileFullPath);
                _logger.AddDebug($"{type} file downloaded from {url} to {fileFullPath}");
                return fileFullPath;
             }
