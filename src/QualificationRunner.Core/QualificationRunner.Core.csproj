@@ -31,9 +31,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="OSPSuite.Core" Version="13.0.52" />
-    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.52" />
-    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.52" />
+    <PackageReference Include="OSPSuite.Core" Version="13.0.56" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.56" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.56" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
   </ItemGroup>
   <ItemGroup>
