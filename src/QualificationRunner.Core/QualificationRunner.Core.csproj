@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <IsPackable>false</IsPackable>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Version>12.0.0</Version>
     <PackageVersion>12.0.0</PackageVersion>
     <AssemblyVersion>12.0.0</AssemblyVersion>
@@ -16,32 +15,27 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="..\..\SolutionInfo.cs" Link="Properties\SolutionInfo.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
-      <PackagePath></PackagePath>
+      <PackagePath>
+      </PackagePath>
     </None>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="OSPSuite.Core" Version="13.0.32" />
-    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.32" />
-    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.32" />
+    <PackageReference Include="OSPSuite.Core" Version="13.0.51" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.51" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.51" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
   </ItemGroup>
-
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
 </Project>
