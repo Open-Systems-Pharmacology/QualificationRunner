@@ -5,7 +5,6 @@
     <TargetFramework>net472</TargetFramework>
     <Version>12.1.0</Version>
     <OutputType>Exe</OutputType>
-    <Version>12.1.0</Version>
     <PackageVersion>12.1.0</PackageVersion>
     <AssemblyVersion>12.1.0</AssemblyVersion>
     <FileVersion>12.1.0</FileVersion>
