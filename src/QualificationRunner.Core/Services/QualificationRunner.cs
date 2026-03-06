@@ -65,7 +65,8 @@ namespace QualificationRunner.Core.Services
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
 
          _logger.AddInfo("Starting validation runs...");
-         var validations = await Task.WhenAll(projectConfigurations.Select(validateProject));
+         var numberOfCores = Environment.ProcessorCount;
+         var validations = await runThrottled(projectConfigurations, validateProject, numberOfCores);
 
          var invalidConfigurations = validations.Where(x => !x.Success).ToList();
          if (invalidConfigurations.Any())
@@ -73,7 +74,7 @@ namespace QualificationRunner.Core.Services
 
          //Run all qualification projects
          _logger.AddInfo("Starting qualification runs...");
-         var runResults = await Task.WhenAll(projectConfigurations.Select(runQualification));
+         var runResults = await runThrottled(projectConfigurations, runQualification, numberOfCores);
          var invalidRunResults = runResults.Where(x => !x.Success).ToList();
          if (invalidRunResults.Any())
             throw new QualificationRunException(errorMessageFrom(invalidRunResults));
@@ -86,6 +87,30 @@ namespace QualificationRunner.Core.Services
       }
 
       private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
+
+      private async Task<QualificationRunResult[]> runThrottled(
+         QualifcationConfiguration[] configurations,
+         Func<QualifcationConfiguration, Task<QualificationRunResult>> action,
+         int maxDegreeOfParallelism)
+      {
+         using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
+         {
+            var tasks = configurations.Select(async config =>
+            {
+               await semaphore.WaitAsync();
+               try
+               {
+                  return await action(config);
+               }
+               finally
+               {
+                  semaphore.Release();
+               }
+            }).ToArray();
+
+            return await Task.WhenAll(tasks);
+         }
+      }
 
       private async Task<string> downloadRemoteFile(string url, string locationInTempFolder, string type)
       {
