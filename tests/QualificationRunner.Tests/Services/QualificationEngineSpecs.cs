@@ -1,8 +1,6 @@
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using FakeItEasy;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 using OSPSuite.BDDHelper;
 using OSPSuite.BDDHelper.Extensions;
 using OSPSuite.Core.Qualification;
@@ -10,6 +8,9 @@ using OSPSuite.Core.Services;
 using QualificationRunner.Core;
 using QualificationRunner.Core.RunOptions;
 using QualificationRunner.Core.Services;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace QualificationRunner.Tests.Services
 {
@@ -115,7 +116,7 @@ namespace QualificationRunner.Tests.Services
 
    public class When_running_a_qualification_with_an_already_canceled_token : concern_for_QualificationEngine
    {
-      [Observation]
+      [Test]
       public void should_stop_when_the_cancellation_token_is_already_canceled()
       {
          var cancellationToken = new CancellationToken(canceled: true);
