@@ -83,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: testLog_Windows
-          path: **/testLog*.html
+          path: */testLog*.html
 
       - name: Push nightly portable as artifact
         uses: actions/upload-artifact@v4
