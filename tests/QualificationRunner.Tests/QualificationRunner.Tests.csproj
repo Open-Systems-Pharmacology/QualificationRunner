@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FakeItEasy" Version="9.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+    <PackageReference Include="NUnit" Version="4.5.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.1.0" />
+    <PackageReference Include="OSPSuite.BDDHelper" Version="4.0.1.1" />
+    <PackageReference Include="OSPSuite.Core" Version="12.3.27" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="12.3.27" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="12.3.27" />
+  </ItemGroup>
+
+</Project>
