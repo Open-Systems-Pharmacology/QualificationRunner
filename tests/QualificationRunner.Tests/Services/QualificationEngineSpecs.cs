@@ -82,12 +82,17 @@ namespace QualificationRunner.Tests.Services
 
    public class When_running_a_qualification_and_the_pksim_cli_file_does_not_exist : concern_for_QualificationEngine
    {
+      protected override void Context()
+      {
+         base.Context();
+
+         var missingPath = Path.Combine(_tempFolder, "missing", "PKSim.CLI.exe");
+         A.CallTo(() => _applicationConfiguration.PKSimCLIPathFor(_runOptions.PKSimInstallationFolder)).Returns(missingPath);
+      }
+
       [Observation]
       public void should_throw_when_pksim_cli_does_not_exist()
       {
-         var missingPath = Path.Combine(_tempFolder, "missing", "PKSim.CLI.exe");
-         A.CallTo(() => _applicationConfiguration.PKSimCLIPathFor(_runOptions.PKSimInstallationFolder)).Returns(missingPath);
-
          The.Action(async () => await sut.Run(_qualificationConfiguration, _runOptions, CancellationToken.None))
             .ShouldThrowAn<QualificationRunException>();
 
@@ -97,21 +102,22 @@ namespace QualificationRunner.Tests.Services
 
    public class When_validating_a_qualification_and_the_pksim_cli_file_does_not_exist : concern_for_QualificationEngine
    {
+      protected override void Context()
+      {
+         base.Context();
+
+         _runOptions.ExportProjectFiles = true;
+         var missingPath = Path.Combine(_tempFolder, "missing", "PKSim.CLI.exe");
+         A.CallTo(() => _applicationConfiguration.PKSimCLIPathFor(_runOptions.PKSimInstallationFolder)).Returns(missingPath);
+      }
+
       [Observation]
       public void should_throw_when_pksim_cli_does_not_exist()
       {
-         var missingPath = Path.Combine(_tempFolder, "missing", "PKSim.CLI.exe");
-         A.CallTo(() => _applicationConfiguration.PKSimCLIPathFor(_runOptions.PKSimInstallationFolder)).Returns(missingPath);
-
          The.Action(async () => await sut.Validate(_qualificationConfiguration, _runOptions, CancellationToken.None))
             .ShouldThrowAn<QualificationRunException>();
       }
 
-      protected override void Context()
-      {
-         base.Context();
-         _runOptions.ExportProjectFiles = true;
-      }
    }
 
    public class When_running_a_qualification_with_an_already_canceled_token : concern_for_QualificationEngine
