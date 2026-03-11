@@ -3,6 +3,7 @@ using NUnit.Framework;
 using OSPSuite.BDDHelper;
 using QualificationRunner.Core.RunOptions;
 using Microsoft.Extensions.Logging;
+using OSPSuite.BDDHelper.Extensions;
 using Services = QualificationRunner.Core.Services;
 
 namespace QualificationRunner.IntegrationTests
@@ -17,21 +18,58 @@ namespace QualificationRunner.IntegrationTests
       }
 
       protected abstract string TestProjectName();
+      
       protected string TestProjectFolder => Path.Combine(TestDataFolder, TestProjectName());
+
+      protected string OutputFolder => Path.Combine(TestProjectFolder, "re_input");
+
+      protected string LogFile => Path.Combine(OutputFolder, "logfile.txt");
+
+      protected string ReportConfigurationFileName => "report-configuration-plan";
+
+      protected string InputFolder => Path.Combine(TestProjectFolder, "Input");
+
+      protected string QualificationPlanFile => Path.Combine(InputFolder, "qualification_plan.json");
 
       protected QualificationRunOptions RunOptions => new QualificationRunOptions
          {
-            ConfigurationFile = Path.Combine(TestProjectFolder, "Input/qualification_plan.json"),
-            OutputFolder = Path.Combine(TestProjectFolder, "re_input"),
-            LogFile = Path.Combine(TestProjectFolder, "logfile.txt"),
+            ConfigurationFile = QualificationPlanFile,
+            OutputFolder = OutputFolder,
+            LogFile = LogFile,
             Run = false,
             ExportProjectFiles = false,
             ForceDelete = true,
             LogLevel = LogLevel.Debug,
-            ConfigurationFolder = Path.Combine(TestProjectFolder, "Input"),
-            ReportConfigurationFileName = "report-configuration-plan",
+            ConfigurationFolder = InputFolder,
+            ReportConfigurationFileName = ReportConfigurationFileName,
             PKSimInstallationFolder = System.Environment.GetEnvironmentVariable("PKSIM_INSTALLATION_FOLDER")
          };
+
+      protected void CheckFilesExist(string[] filesInOutputFolder)
+      {
+         foreach (var file in filesInOutputFolder)
+         {
+            var filePath = file.StartsWith(OutputFolder) ? file : Path.Combine(OutputFolder, file);
+            File.Exists(filePath).ShouldBeTrue($"Expected file '{filePath}' does not exist.");
+         }
+      }
+
+      protected void LogFilesDoNotContainErrorsOrWarnings()
+      {
+         var logFiles = Directory.GetFiles(OutputFolder, "log*.txt", SearchOption.AllDirectories);
+         (logFiles.Length>=2).ShouldBeTrue("Less than 2 log files found in the output folder or its subdirectories.");
+
+         foreach (var logFile in logFiles)
+         {
+            File.Exists(logFile).ShouldBeTrue($"Log file does not exist at {logFile}");
+
+            var logContent = File.ReadAllText(logFile);
+            logContent.Contains("ERROR").ShouldBeFalse($"Log file {logFile} contains errors.");
+            logContent.Contains("WARN").ShouldBeFalse($"Log file {logFile} contains warnings.");
+            logContent.Contains("FAILED").ShouldBeFalse($"Log file {logFile} contains failed entries.");
+            logContent.Contains("INVALID").ShouldBeFalse($"Log file {logFile} contains invalid entries.");
+         }
+      }
    }
 
    public class When_processing_a_qualification_plan_single_project : concern_for_QualificationRunnerIntegration
@@ -44,13 +82,28 @@ namespace QualificationRunner.IntegrationTests
       [Observation]
       public void should_create_all_expected_files()
       {
-         var x = 1;
+         CheckFilesExist(new[]
+         {
+            LogFile,
+            $"{ReportConfigurationFileName}.json",
+            @"Compound\Sim 1 - intravenous\Sim 1 - intravenous.pkml",
+            @"Compound\Sim 2 - peroral\Sim 2 - peroral.pkml",
+            @"Content\References.md",
+            @"Inputs\Compound\Compound\COMPOUND.md",
+            @"Inputs\Compound\Formulation\Tablet.md",
+            @"Intro\titlepage.md",
+            @"ObservedData\Observed data iv.csv",
+            @"ObservedData\Observed data po.csv",
+            @"temp\Compound\config.json",
+            @"temp\Compound\log.txt",
+            @"temp\Compound\mapping.json"
+         });
       }
 
       [Observation]
       public void log_files_should_not_contain_errors_or_warnings()
       {
-         var x = 1;
+         LogFilesDoNotContainErrorsOrWarnings();
       }
 
    }
