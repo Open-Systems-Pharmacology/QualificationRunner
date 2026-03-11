@@ -53,7 +53,15 @@ jobs:
           nuget sources add -username Open-Systems-Pharmacology -password ${{ secrets.GITHUB_TOKEN }} -name OSP-GitHub-Packages -source "https://nuget.pkg.github.com/Open-Systems-Pharmacology/index.json"
           nuget restore
 
-      - name: Install PK-Sim Portable
+      - name: define env variables
+        run: |
+          echo "APP_VERSION=12.3.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build
+        run: |
+          dotnet build QualificationRunner.sln /p:Version=${{env.APP_VERSION}}
+
+      - name: Install PK-Sim Portable (for Integration Tests)
         shell: pwsh
         run: |
           $installDir = Join-Path $PWD "PK-Sim"
@@ -65,14 +73,6 @@ jobs:
           Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
 
           "PKSIM_INSTALLATION_FOLDER=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: define env variables
-        run: |
-          echo "APP_VERSION=12.3.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: Build
-        run: |
-          dotnet build QualificationRunner.sln /p:Version=${{env.APP_VERSION}}
 
       - name: Test
         run: dotnet test QualificationRunner.sln --no-build -v normal  --logger:"html;LogFileName=../../../testLog_Windows.html"
