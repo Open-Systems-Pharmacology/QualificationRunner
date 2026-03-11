@@ -8,8 +8,14 @@ using Services = QualificationRunner.Core.Services;
 namespace QualificationRunner.IntegrationTests
 {
    [Category("IntegrationTests")]
-   public abstract class concern_for_QualificationEngineIntegration : ContextForIntegration<Services.QualificationRunner>
+   public abstract class concern_for_QualificationRunnerIntegration : ContextForIntegration<Services.QualificationRunner>
    {
+      public override void GlobalContext()
+      {
+         base.GlobalContext();
+         sut.RunBatchAsync(RunOptions).Wait();
+      }
+
       protected abstract string TestProjectName();
       protected string TestProjectFolder => Path.Combine(TestDataFolder, TestProjectName());
 
@@ -28,14 +34,8 @@ namespace QualificationRunner.IntegrationTests
          };
    }
 
-   public class When_processing_a_qualification_plan_single_project : concern_for_QualificationEngineIntegration
+   public class When_processing_a_qualification_plan_single_project : concern_for_QualificationRunnerIntegration
    {
-      public override void GlobalContext()
-      {
-         base.GlobalContext();
-         sut.RunBatchAsync(RunOptions).Wait();
-      }
-
       protected override string TestProjectName()
       {
          return "SingleProject";
