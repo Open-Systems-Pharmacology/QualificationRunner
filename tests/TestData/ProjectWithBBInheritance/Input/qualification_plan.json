@@ -1,0 +1,294 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Open-Systems-Pharmacology/QualificationPlan/v3.5/schemas/OSP_Qualification_Plan_Schema.json",
+  "Projects": [
+    {
+      "Id": "Mefenamic_acid",
+      "Path": "Mefenamic_acid-Model.json",
+      "BuildingBlocks": []
+    },
+    {
+      "Id": "Dapagliflozin",
+      "Path": "Dapagliflozin-Model.json",
+      "BuildingBlocks": []
+    },
+    {
+      "Id": "Mefenamic_acid-Dapagliflozin-DDI",
+      "Path": "Mefenamic_acid-Dapagliflozin-DDI.json",
+      "BuildingBlocks": [
+        {
+          "Type": "Individual",
+          "Name": "Standard_Adult_UGT",
+          "Project": "Dapagliflozin"
+        },
+        {
+          "Type": "Compound",
+          "Name": "Mefenamic acid",
+          "Project": "Mefenamic_acid"
+        },
+        {
+          "Type": "Compound",
+          "Name": "Dapagliflozin",
+          "Project": "Dapagliflozin"
+        },
+        {
+          "Type": "Formulation",
+          "Name": "Ponstan capsule",
+          "Project": "Mefenamic_acid"
+        }
+      ],
+      "SimulationParameters": [
+        {
+          "Project": "Dapagliflozin",
+          "Simulation": "PO SD 10 mg (perm)",
+          "Path": "Dapagliflozin|logP (veg.oil/water)",
+          "TargetSimulations": [
+            "DDI_Control",
+            "DDI_Treatment"
+          ]
+        },
+        {
+          "Project": "Dapagliflozin",
+          "Simulation": "PO SD 10 mg (perm)",
+          "Path": "Dapagliflozin|Blood/Plasma concentration ratio",
+          "TargetSimulations": [
+            "DDI_Control",
+            "DDI_Treatment"
+          ]
+        }
+      ]
+    }
+  ],
+  "ObservedDataSets": [
+    {
+      "Id": "DDI Ratios",
+      "Path": "https://raw.githubusercontent.com/Open-Systems-Pharmacology/Database-for-observed-data/v1.7/DDI.csv",
+      "Type": "DDIRatio"
+    }
+  ],
+  "Plots": {
+    "PlotSettings": {
+      "ChartWidth": 500,
+      "ChartHeight": 400,
+      "Fonts": {
+        "AxisSize": 11,
+        "LegendSize": 9,
+        "OriginSize": 9,
+        "FontFamilyName": "Arial",
+        "WatermarkSize": 40
+      }
+    },
+    "AxesSettings": {
+      "ComparisonTimeProfile": [
+        {
+          "Unit": "h",
+          "Dimension": "Time",
+          "Type": "X",
+          "GridLines": false,
+          "Scaling": "Linear"
+        },
+        {
+          "Unit": "ng/ml",
+          "Dimension": "Concentration (mass)",
+          "Type": "Y",
+          "GridLines": false,
+          "Scaling": "Log"
+        }
+      ],
+      "DDIRatioPlotsPredictedVsObserved": [
+        {
+          "Unit": "",
+          "Dimension": "Dimensionless",
+          "Type": "X",
+          "GridLines": false,
+          "Scaling": "Log"
+        },
+        {
+          "Unit": "",
+          "Dimension": "Dimensionless",
+          "Type": "Y",
+          "GridLines": false,
+          "Scaling": "Log"
+        }
+      ],
+      "DDIRatioPlotsResidualsVsObserved": [
+        {
+          "Unit": "",
+          "Dimension": "Dimensionless",
+          "Type": "X",
+          "GridLines": false,
+          "Scaling": "Log"
+        },
+        {
+          "Unit": "",
+          "Dimension": "Dimensionless",
+          "Type": "Y",
+          "GridLines": false,
+          "Scaling": "Log"
+        }
+      ]
+    },
+    "ComparisonTimeProfilePlots": [
+      {
+        "SectionReference": "mefenamic-acid-dapagliflozin-ddi",
+        "Title": "Kasichayanula 2013a",
+        "SimulationDuration": 48,
+        "TimeUnit": "h",
+        "OutputMappings": [
+          {
+            "Project": "Mefenamic_acid-Dapagliflozin-DDI",
+            "Simulation": "DDI_Control",
+            "Output": "Organism|PeripheralVenousBlood|Dapagliflozin|Plasma (Peripheral Venous Blood)",
+            "ObservedData": "Obs_Control",
+            "StartTime": 0,
+            "TimeUnit": "h",
+            "Color": "#2166ac",
+            "Caption": "Control (without mefenamic acid)",
+            "Symbol": "Circle"
+          },
+          {
+            "Project": "Mefenamic_acid-Dapagliflozin-DDI",
+            "Simulation": "DDI_Treatment",
+            "Output": "Organism|PeripheralVenousBlood|Dapagliflozin|Plasma (Peripheral Venous Blood)",
+            "ObservedData": "Obs_Treatment",
+            "StartTime": 24,
+            "TimeUnit": "h",
+            "Color": "#b2182b",
+            "Caption": "Treatment (with mefenamic acid)",
+            "Symbol": "Square"
+          }
+        ]
+      }
+    ],
+    "DDIRatioPlots": [
+      {
+        "SectionReference": "qualification-of-ugt-mediated-ddi",
+        "Title": "UGT1A1 and UGT1A9 Inhibition DDI",
+        "PKParameters": [
+          "AUC",
+          "CMAX"
+        ],
+        "PlotTypes": [
+          "predictedVsObserved",
+          "residualsVsObserved"
+        ],
+        "Artifacts": [
+          "Plot",
+          "GMFE",
+          "Measure",
+          "Table"
+        ],
+        "Groups": [
+          {
+            "Caption": "Mefenamic acid + Dapagliflozin",
+            "Color": "#2166ac",
+            "Symbol": "Square",
+            "DDIRatios": [
+              {
+                "Output": "Organism|PeripheralVenousBlood|Dapagliflozin|Plasma (Peripheral Venous Blood)",
+                "ObservedData": "DDI Ratios",
+                "ObservedDataRecordId": 642,
+                "SimulationControl": {
+                  "Project": "Mefenamic_acid-Dapagliflozin-DDI",
+                  "Simulation": "DDI_Control",
+                  "StartTime": 0,
+                  "EndTime": 9999,
+                  "TimeUnit": "h"
+                },
+                "SimulationDDI": {
+                  "Project": "Mefenamic_acid-Dapagliflozin-DDI",
+                  "Simulation": "DDI_Treatment",
+                  "StartTime": 24,
+                  "EndTime": 9999,
+                  "TimeUnit": "h"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "Inputs": [],
+  "Sections": [
+    {
+      "Reference": "introduction",
+      "Title": "Introduction",
+      "Sections": [
+        {
+          "Reference": "objective",
+          "Title": "Objective",
+          "Content": "Content/Qualification_DDI_UGT_objective.md"
+        },
+        {
+          "Reference": "ugt-ddi-network",
+          "Title": "UGT DDI Network",
+          "Content": "Content/Qualification_DDI_UGT_network_description.md",
+          "Sections": [
+            {
+              "Reference": "network-atazanavir-raltegravir-ddi",
+              "Title": "Atazanavir - Raltegravir DDI",
+              "Content": "Content/ATV-RAL-DDI.md"
+            },
+            {
+              "Reference": "network-mefenamic-acid-dapagliflozin-ddi",
+              "Title": "Mefenamic acid - Dapagliflozin DDI",
+              "Content": "Content/MEFA-Dapa-DDI.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Reference": "qualification-of-ugt-mediated-ddi",
+      "Title": "Qualification of Use Case UGT-mediated DDI",
+      "Content": "Content/Intro_evaluation_DDI_network.md"
+    },
+    {
+      "Reference": "ct-profiles",
+      "Title": "Concentration-Time Profiles",
+      "Content": "Content/Intro_evaluation_CTprofiles.md",
+      "Sections": [
+        {
+          "Reference": "atazanavir-raltegravir-ddi",
+          "Title": "Atazanavir - Raltegravir DDI"
+        },
+        {
+          "Reference": "mefenamic-acid-dapagliflozin-ddi",
+          "Title": "Mefenamic acid - Dapagliflozin DDI"
+        }
+      ]
+    },
+    {
+      "Reference": "main-references",
+      "Title": "References",
+      "Content": "Content/References.md",
+      "Sections": []
+    },
+    {
+      "Reference": "appendix",
+      "Title": "Appendix",
+      "Sections": [
+        {
+          "Reference": "osp-introduction",
+          "Title": "Open Systems Pharmacology Suite (OSPS) Introduction",
+          "Content": "https://raw.githubusercontent.com/Open-Systems-Pharmacology/Qualification-text-modules/v1.3/OSPS_Introduction.md"
+        },
+        {
+          "Reference": "mathematical-implementation-of-ddi",
+          "Title": "Mathematical Implementation of Drug-Drug Interactions",
+          "Content": "https://raw.githubusercontent.com/Open-Systems-Pharmacology/Qualification-text-modules/v1.3/Mathematical_Implementation_of_DDI.md"
+        },
+        {
+          "Reference": "automatic-requalification-workflow",
+          "Title": "Automatic (re)-qualification workflow",
+          "Content": "https://raw.githubusercontent.com/Open-Systems-Pharmacology/Qualification-text-modules/v1.3/Qualification_Workflow.md"
+        }
+      ]
+    }
+  ],
+  "Intro": [
+    {
+      "Path": "Content/titlepage.md"
+    }
+  ]
+}

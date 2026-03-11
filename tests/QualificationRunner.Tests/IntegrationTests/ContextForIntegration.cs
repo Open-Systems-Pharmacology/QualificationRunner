@@ -12,14 +12,15 @@ namespace QualificationRunner.IntegrationTests
    {
       public override void GlobalContext()
       {
-         if (IoC.Container != null) return;
-
-         var container = QualificationRunnerRegister.Initialize();
-
-         using (container.OptimizeDependencyResolution())
+         if (IoC.Container == null)
          {
-            container.RegisterImplementationOf(new SynchronizationContext());
-            container.AddRegister(x => x.FromType<QualificationRunnerRegister>());
+            var container = QualificationRunnerRegister.Initialize();
+
+            using (container.OptimizeDependencyResolution())
+            {
+               container.RegisterImplementationOf(new SynchronizationContext());
+               container.AddRegister(x => x.FromType<QualificationRunnerRegister>());
+            }
          }
 
          sut = IoC.Resolve<T>();

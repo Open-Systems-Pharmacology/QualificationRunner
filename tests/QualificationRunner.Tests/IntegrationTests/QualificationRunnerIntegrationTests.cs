@@ -54,7 +54,7 @@ namespace QualificationRunner.IntegrationTests
          }
       }
 
-      protected void LogFilesDoNotContainErrorsOrWarnings()
+      protected void CheckLogFilesDoNotContainErrorsOrWarnings()
       {
          var logFiles = Directory.GetFiles(OutputFolder, "log*.txt", SearchOption.AllDirectories);
          (logFiles.Length>=2).ShouldBeTrue("Less than 2 log files found in the output folder or its subdirectories.");
@@ -103,7 +103,42 @@ namespace QualificationRunner.IntegrationTests
       [Observation]
       public void log_files_should_not_contain_errors_or_warnings()
       {
-         LogFilesDoNotContainErrorsOrWarnings();
+         CheckLogFilesDoNotContainErrorsOrWarnings();
+      }
+   }
+
+   public class When_processing_a_qualification_plan_multiple_projects_with_inheritance : concern_for_QualificationRunnerIntegration
+   {
+      protected override string TestProjectName()
+      {
+         return "ProjectWithBBInheritance";
+      }
+
+      [Observation]
+      public void should_create_all_expected_files()
+      {
+         CheckFilesExist(new[]
+         {
+            LogFile,
+            $"{ReportConfigurationFileName}.json",
+            @"Mefenamic_acid-Dapagliflozin-DDI\DDI_Control\DDI_Control.pkml",
+            @"Mefenamic_acid-Dapagliflozin-DDI\DDI_Treatment\DDI_Treatment.pkml",
+            @"Content\References.md",
+            @"Content\images\GFME_equation.PNG",
+            @"Intro\titlepage.md",
+            @"ObservedData\DDI.csv",
+            @"ObservedData\Obs_Control.csv",
+            @"ObservedData\Obs_Treatment.csv",
+            @"temp\Mefenamic_acid-Dapagliflozin-DDI\config.json",
+            @"temp\Mefenamic_acid-Dapagliflozin-DDI\log.txt",
+            @"temp\Mefenamic_acid-Dapagliflozin-DDI\mapping.json"
+         });
+      }
+
+      [Observation]
+      public void log_files_should_not_contain_errors_or_warnings()
+      {
+         CheckLogFilesDoNotContainErrorsOrWarnings();
       }
 
    }
