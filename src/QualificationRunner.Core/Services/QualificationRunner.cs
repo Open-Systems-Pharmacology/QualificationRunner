@@ -516,8 +516,8 @@ namespace QualificationRunner.Core.Services
 
       public T Cast<T>(dynamic obj) where T : class
       {
-         var json = (string)_jsonSerializer.SerializeAsString((object)obj);
-         return (T)_jsonSerializer.DeserializeFromString(json, typeof(T));
+         var json = _jsonSerializer.SerializeAsString(obj);
+         return _jsonSerializer.DeserializeFromString<T>(json);
       }
 
       public IReadOnlyList<T> GetListFrom<T>(dynamic enumerable) where T : class

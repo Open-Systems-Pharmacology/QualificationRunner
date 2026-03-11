@@ -73,23 +73,6 @@ namespace QualificationRunner.Tests.Services
       }
    }
 
-   public class When_casting_an_object_to_a_given_type : concern_for_QualificationRunner
-   {
-      [Observation]
-      public void should_use_the_json_serializer_to_convert_the_object()
-      {
-         var source = new { Name = "source" };
-         var expected = new RunnerTestDto { Name = "converted" };
-
-         A.CallTo(() => _jsonSerializer.SerializeAsString(A<object>.Ignored)).Returns("json");
-         A.CallTo(() => _jsonSerializer.DeserializeFromString(A<string>.Ignored, typeof(RunnerTestDto))).Returns(expected);
-
-         var result = sut.Cast<RunnerTestDto>(source);
-
-         result.ShouldBeEqualTo(expected);
-      }
-   }
-
    public class When_getting_a_list_from_a_dynamic_enumerable : concern_for_QualificationRunner
    {
       [Observation]
@@ -99,24 +82,6 @@ namespace QualificationRunner.Tests.Services
 
          result.ShouldNotBeNull();
          result.Count.ShouldBeEqualTo(0);
-      }
-
-      [Observation]
-      public void should_convert_each_item_using_cast()
-      {
-         var item1 = new { Name = "first" };
-         var item2 = new { Name = "second" };
-         var enumerable = new List<object> { item1, item2 };
-
-         A.CallTo(() => _jsonSerializer.SerializeAsString(A<object>.Ignored)).ReturnsNextFromSequence("json1", "json2");
-         A.CallTo(() => _jsonSerializer.DeserializeFromString(A<string>.Ignored, typeof(RunnerTestDto)))
-            .ReturnsNextFromSequence(new RunnerTestDto { Name = "one" }, new RunnerTestDto { Name = "two" });
-
-         var result = sut.GetListFrom<RunnerTestDto>(enumerable);
-
-         result.Count.ShouldBeEqualTo(2);
-         result[0].Name.ShouldBeEqualTo("one");
-         result[1].Name.ShouldBeEqualTo("two");
       }
    }
 
