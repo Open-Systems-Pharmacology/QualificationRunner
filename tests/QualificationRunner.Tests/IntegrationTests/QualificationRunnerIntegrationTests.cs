@@ -1,9 +1,10 @@
-﻿using System.IO;
+﻿using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using OSPSuite.BDDHelper;
-using QualificationRunner.Core.RunOptions;
-using Microsoft.Extensions.Logging;
 using OSPSuite.BDDHelper.Extensions;
+using QualificationRunner.Core.RunOptions;
+using System;
+using System.IO;
 using Services = QualificationRunner.Core.Services;
 
 namespace QualificationRunner.IntegrationTests
@@ -42,7 +43,7 @@ namespace QualificationRunner.IntegrationTests
             LogLevel = LogLevel.Debug,
             ConfigurationFolder = InputFolder,
             ReportConfigurationFileName = ReportConfigurationFileName,
-            PKSimInstallationFolder = System.Environment.GetEnvironmentVariable("PKSIM_INSTALLATION_FOLDER")
+            PKSimInstallationFolder = Environment.GetEnvironmentVariable("PKSIM_INSTALLATION_FOLDER")
          };
 
       protected void CheckFilesExist(string[] filesInOutputFolder)
@@ -64,10 +65,10 @@ namespace QualificationRunner.IntegrationTests
             File.Exists(logFile).ShouldBeTrue($"Log file does not exist at {logFile}");
 
             var logContent = File.ReadAllText(logFile);
-            logContent.Contains("ERROR").ShouldBeFalse($"Log file {logFile} contains errors.");
-            logContent.Contains("WARN").ShouldBeFalse($"Log file {logFile} contains warnings.");
-            logContent.Contains("FAILED").ShouldBeFalse($"Log file {logFile} contains failed entries.");
-            logContent.Contains("INVALID").ShouldBeFalse($"Log file {logFile} contains invalid entries.");
+            logContent.IndexOf("Error", StringComparison.OrdinalIgnoreCase).ShouldBeEqualTo(-1, $"Log file {logFile} contains errors.");
+            logContent.IndexOf("Warn", StringComparison.OrdinalIgnoreCase).ShouldBeEqualTo(-1, $"Log file {logFile} contains warnings.");
+            logContent.IndexOf("Failed", StringComparison.OrdinalIgnoreCase).ShouldBeEqualTo(-1, $"Log file {logFile} contains failed entries.");
+            logContent.IndexOf("Invalid", StringComparison.OrdinalIgnoreCase).ShouldBeEqualTo(-1, $"Log file {logFile} contains invalid entries.");
          }
       }
    }
