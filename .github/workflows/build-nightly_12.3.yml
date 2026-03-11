@@ -53,6 +53,19 @@ jobs:
           nuget sources add -username Open-Systems-Pharmacology -password ${{ secrets.GITHUB_TOKEN }} -name OSP-GitHub-Packages -source "https://nuget.pkg.github.com/Open-Systems-Pharmacology/index.json"
           nuget restore
 
+      - name: Install PK-Sim Portable
+        shell: pwsh
+        run: |
+          $installDir = Join-Path $PWD "PK-Sim"
+          New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+
+          $zipPath = Join-Path $env:RUNNER_TEMP "PKSim-Portable.zip"
+          Invoke-WebRequest -Uri "https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v12.2.112/PKSim-Portable.12.2.112.zip" -OutFile $zipPath
+
+          Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
+
+          "PKSIM_INSTALLATION_FOLDER=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: define env variables
         run: |
           echo "APP_VERSION=12.3.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
