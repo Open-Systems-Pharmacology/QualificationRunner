@@ -62,8 +62,6 @@ namespace QualificationRunner.IntegrationTests
 
          foreach (var logFile in logFiles)
          {
-            File.Exists(logFile).ShouldBeTrue($"Log file does not exist at {logFile}");
-
             var logContent = File.ReadAllText(logFile);
             logContent.IndexOf("Error", StringComparison.OrdinalIgnoreCase).ShouldBeEqualTo(-1, $"Log file {logFile} contains errors.");
             logContent.IndexOf("Warn", StringComparison.OrdinalIgnoreCase).ShouldBeEqualTo(-1, $"Log file {logFile} contains warnings.");
