@@ -50,7 +50,7 @@ namespace QualificationRunner.IntegrationTests
       {
          foreach (var file in filesInOutputFolder)
          {
-            var filePath = file.StartsWith(OutputFolder) ? file : Path.Combine(OutputFolder, file);
+            var filePath = Path.IsPathRooted(file) ? file : Path.Combine(OutputFolder, file);
             File.Exists(filePath).ShouldBeTrue($"Expected file '{filePath}' does not exist.");
          }
       }
