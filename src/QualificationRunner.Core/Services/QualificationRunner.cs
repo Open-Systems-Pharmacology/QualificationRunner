@@ -59,7 +59,7 @@ namespace QualificationRunner.Core.Services
          await updateProjectsFullPath(projects);
 
          //Configurations only need to be created once!
-         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualifcationConfigurationFor(p, projects, plots, allInputs)));
+         var projectConfigurations = await Task.WhenAll(projects.Select(p => createQualificationConfigurationFor(p, projects, plots, allInputs)));
 
          _logger.AddDebug("Copying static files");
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
@@ -336,7 +336,7 @@ namespace QualificationRunner.Core.Services
          }
       }
 
-      private async Task<QualifcationConfiguration> createQualifcationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
+      private async Task<QualifcationConfiguration> createQualificationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -504,7 +504,7 @@ namespace QualificationRunner.Core.Services
          }
          catch
          {
-            //Ensure that we do not not throw an exception if one file cannot be deleted
+            //Ensure that we do not throw an exception if one file cannot be deleted
          }
       }
 

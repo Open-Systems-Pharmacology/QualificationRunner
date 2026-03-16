@@ -1,0 +1,59 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+    - develop
+  pull_request:
+    branches:
+    - develop
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+
+      - name: Restore dependencies
+        run: |
+          nuget sources add -username Open-Systems-Pharmacology -password ${{ secrets.GITHUB_TOKEN }} -name OSP-GitHub-Packages -source "https://nuget.pkg.github.com/Open-Systems-Pharmacology/index.json"
+          nuget restore
+
+      - name: define env variables
+        run: |
+          echo "APP_VERSION=12.3.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build
+        run: |
+          dotnet build QualificationRunner.sln /p:Version=${{env.APP_VERSION}}
+
+      - name: Install PK-Sim Portable (for Integration Tests)
+        shell: pwsh
+        run: |
+          $installDir = Join-Path $PWD "PK-Sim"
+          New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+
+          $zipPath = Join-Path $env:RUNNER_TEMP "PKSim-Portable.zip"
+          Invoke-WebRequest -Uri "https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v12.2.112/PKSim-Portable.12.2.112.zip" -OutFile $zipPath
+
+          Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
+
+          "PKSIM_INSTALLATION_FOLDER=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Test
+        run: dotnet test QualificationRunner.sln --no-build -v normal  --logger:"html;LogFileName=../../../testLog_Windows.html"
+
+      - name: Push test log as artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testLog_Windows
+          path: ./**/testLog*.html

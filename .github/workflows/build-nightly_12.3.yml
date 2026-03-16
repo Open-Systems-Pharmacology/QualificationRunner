@@ -7,7 +7,6 @@ on:
   schedule:
     - cron: '0 2 * * *'
 
-
 permissions:
   contents: read
   packages: read
@@ -19,7 +18,7 @@ jobs:
       LATEST_COMMIT_TIMESPAN: ${{ steps.get-latest-commit-timespan.outputs.LATEST_COMMIT_TIMESPAN}}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -45,22 +44,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: 'true'
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
 
       - name: Restore dependencies
         run: |
           nuget sources add -username Open-Systems-Pharmacology -password ${{ secrets.GITHUB_TOKEN }} -name OSP-GitHub-Packages -source "https://nuget.pkg.github.com/Open-Systems-Pharmacology/index.json"
-          nuget sources add -name bddhelper -source https://ci.appveyor.com/nuget/ospsuite-bddhelper 
-          nuget sources add -name utility -source https://ci.appveyor.com/nuget/ospsuite-utility 
-          nuget sources add -name serializer -source https://ci.appveyor.com/nuget/ospsuite-serializer 
-          nuget sources add -name databinding -source https://ci.appveyor.com/nuget/ospsuite-databinding 
-          nuget sources add -name texreporting -source https://ci.appveyor.com/nuget/ospsuite-texreporting 
-          nuget sources add -name databinding-devexpress -source https://ci.appveyor.com/nuget/ospsuite-databinding-devexpress 
           nuget restore
 
       - name: define env variables
@@ -69,7 +59,23 @@ jobs:
 
       - name: Build
         run: |
-          msbuild QualificationRunner.sln /p:Version=${{env.APP_VERSION}}
+          dotnet build QualificationRunner.sln /p:Version=${{env.APP_VERSION}}
+
+      - name: Install PK-Sim Portable (for Integration Tests)
+        shell: pwsh
+        run: |
+          $installDir = Join-Path $PWD "PK-Sim"
+          New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+
+          $zipPath = Join-Path $env:RUNNER_TEMP "PKSim-Portable.zip"
+          Invoke-WebRequest -Uri "https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v12.2.112/PKSim-Portable.12.2.112.zip" -OutFile $zipPath
+
+          Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
+
+          "PKSIM_INSTALLATION_FOLDER=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Test
+        run: dotnet test QualificationRunner.sln --no-build -v normal  --logger:"html;LogFileName=../../../testLog_Windows.html"
 
       - name: Sign QualificationRunner.exe with CodeSignTool
         uses: Open-Systems-Pharmacology/Workflows/.github/actions/codesigner-SSL@main
@@ -85,8 +91,15 @@ jobs:
         run: |
           rake "create_portable_setup[${{env.APP_VERSION}}, Debug, qualificationrunner-portable-setup.zip]"
 
+      - name: Push test log as artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testLog_Windows
+          path: ./**/testLog*.html
+
       - name: Push nightly portable as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Qualification Runner ${{env.APP_VERSION}}
           path: setup\QualificationRunner ${{env.APP_VERSION}}
