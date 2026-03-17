@@ -95,7 +95,8 @@ namespace QualificationRunner.Core.Services
       {
          using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
          {
-            var tasks = configurations.Where(mustBeExportedForFurtherProcessing).Select(async config =>
+            var tasks = configurations.Where(config => config.MustBeExportedForFurtherProcessing())
+               .Select(async config =>
             {
                await semaphore.WaitAsync();
                try
@@ -110,26 +111,6 @@ namespace QualificationRunner.Core.Services
 
             return await Task.WhenAll(tasks);
          }
-      }
-
-      /// <summary>
-      /// Evaluates whether the specified qualification configuration contains elements 
-      /// (such as simulations, inputs, or simulation plots) that require further processing.
-      /// </summary>
-      /// <param name="config">The qualification configuration to evaluate.</param>
-      /// <returns>
-      /// <c>true</c> if the configuration contains any simulations, inputs, or simulation plots; 
-      /// otherwise, <c>false</c>.
-      /// </returns>
-      /// <remarks>
-      /// This method is critical for determining which configurations should be included in 
-      /// subsequent processing steps. For more details, refer to the GitHub issue: 
-      /// <see href="https://github.com/Open-Systems-Pharmacology/QualificationRunner/issues/173" />.
-      /// </remarks>
-      private bool mustBeExportedForFurtherProcessing(QualifcationConfiguration config)
-      {
-         return (config.Simulations != null && config.Simulations.Any()) || (config.Inputs != null && config.Inputs.Any()) ||
-                (config.SimulationPlots != null && config.SimulationPlots.Any());
       }
 
       private async Task<string> downloadRemoteFile(string url, string locationInTempFolder, string type)
