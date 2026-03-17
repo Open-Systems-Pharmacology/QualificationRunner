@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.IO;
 using FakeItEasy;
 using Newtonsoft.Json.Linq;
@@ -25,6 +24,7 @@ namespace QualificationRunner.Tests.Services
 
          sut = new QualificationRunner.Core.Services.QualificationRunner(_jsonSerializer, _logger, _qualificationEngineFactory);
       }
+
    }
 
    public class When_running_a_batch_and_the_configuration_file_does_not_exist : concern_for_QualificationRunner

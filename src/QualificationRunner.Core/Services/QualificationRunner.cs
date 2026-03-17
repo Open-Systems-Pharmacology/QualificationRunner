@@ -95,7 +95,8 @@ namespace QualificationRunner.Core.Services
       {
          using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
          {
-            var tasks = configurations.Select(async config =>
+            var tasks = configurations.Where(config => config.MustBeExportedForFurtherProcessing())
+               .Select(async config =>
             {
                await semaphore.WaitAsync();
                try
