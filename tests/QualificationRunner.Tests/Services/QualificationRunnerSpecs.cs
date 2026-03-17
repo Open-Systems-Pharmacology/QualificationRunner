@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using FakeItEasy;
 using Newtonsoft.Json.Linq;
 using OSPSuite.BDDHelper;
@@ -25,6 +26,14 @@ namespace QualificationRunner.Tests.Services
 
          sut = new QualificationRunner.Core.Services.QualificationRunner(_jsonSerializer, _logger, _qualificationEngineFactory);
       }
+
+      protected bool MustBeExportedForFurtherProcessing(QualifcationConfiguration configuration)
+      {
+         var method = typeof(QualificationRunner.Core.Services.QualificationRunner)
+            .GetMethod("mustBeExportedForFurtherProcessing", BindingFlags.Instance | BindingFlags.NonPublic);
+
+         return (bool)method.Invoke(sut, new object[] { configuration });
+      }
    }
 
    public class When_running_a_batch_and_the_configuration_file_does_not_exist : concern_for_QualificationRunner
@@ -46,6 +55,59 @@ namespace QualificationRunner.Tests.Services
       {
          The.Action(async () => await sut.RunBatchAsync(_runOptions))
             .ShouldThrowAn<QualificationRunException>();
+      }
+   }
+
+   public class When_checking_if_a_configuration_must_be_exported_for_further_processing_and_no_references_exist : concern_for_QualificationRunner
+   {
+      [Observation]
+      public void should_not_be_exported()
+      {
+         var configuration = new QualifcationConfiguration();
+
+         MustBeExportedForFurtherProcessing(configuration).ShouldBeFalse();
+      }
+   }
+
+   public class When_checking_if_a_configuration_must_be_exported_for_further_processing_and_simulations_exist : concern_for_QualificationRunner
+   {
+      [Observation]
+      public void should_be_exported()
+      {
+         var configuration = new QualifcationConfiguration
+         {
+            Simulations = new[] { "Simulation1" }
+         };
+
+         MustBeExportedForFurtherProcessing(configuration).ShouldBeTrue();
+      }
+   }
+
+   public class When_checking_if_a_configuration_must_be_exported_for_further_processing_and_inputs_exist : concern_for_QualificationRunner
+   {
+      [Observation]
+      public void should_be_exported()
+      {
+         var configuration = new QualifcationConfiguration
+         {
+            Inputs = new[] { new Input() }
+         };
+
+         MustBeExportedForFurtherProcessing(configuration).ShouldBeTrue();
+      }
+   }
+
+   public class When_checking_if_a_configuration_must_be_exported_for_further_processing_and_simulation_plots_exist : concern_for_QualificationRunner
+   {
+      [Observation]
+      public void should_be_exported()
+      {
+         var configuration = new QualifcationConfiguration
+         {
+            SimulationPlots = new[] { new SimulationPlot() }
+         };
+
+         MustBeExportedForFurtherProcessing(configuration).ShouldBeTrue();
       }
    }
 
