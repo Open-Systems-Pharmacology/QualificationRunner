@@ -13,7 +13,8 @@ namespace QualificationRunner.Core.Assets
    {
       public static string PKSimInstallationFolderNotFound = $"{Tools.PKSIM_CLI} installation folder was not found. Ensure that PK-Sim was installed with the setup OR specify the --pksim option";
 
-      public static string PKSimCLIFileNotFound(string pksimCLIPath) => $"'{pksimCLIPath}' does not exist on your computer.";
+      public static string MoBiInstallationFolderNotFound = $"{Tools.MOBI_CLI} installation folder was not found. Ensure that MoBi was installed with the setup OR specify the --mobi option";
+      public static string CliFileNotFound(string cLIPath) => $"'{cLIPath}' does not exist on your computer.";
 
       public static string NodeNotDefinedInQualificationFile(string node) => $"{node} node not defined in qualification file";
 

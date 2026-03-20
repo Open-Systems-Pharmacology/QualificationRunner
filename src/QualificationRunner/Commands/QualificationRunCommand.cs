@@ -32,6 +32,9 @@ namespace QualificationRunner.Commands
       [Option('e', "exp", Required = false, HelpText = "Should the qualification runner also export the project files (snapshot and PK-Sim project file). Default is false")]
       public bool ExportProjectFiles { get; set; } = false;
 
+      [Option('m', "mobi", Required = false, HelpText = "Optional. Path of MoBi installation folder. If not specified, installation path will be read from registry (e.g required full install of MoBi via setup)")]
+      public string MoBiInstallationFolder { get; set; }
+
       public override QualificationRunOptions ToRunOptions()
       {
          return new QualificationRunOptions
@@ -42,6 +45,7 @@ namespace QualificationRunner.Commands
             ForceDelete = ForceDelete,
             ReportConfigurationFileName = ReportConfigurationFileName,
             PKSimInstallationFolder = PKSimInstallationFolder,
+            MoBiInstallationFolder = MoBiInstallationFolder,
             LogLevel = LogLevel,
             LogFile = LogFileFullPath,
             //TODO switch to RUN when we move to R

@@ -10,6 +10,7 @@ namespace QualificationRunner.Core.RunOptions
       public string OutputFolder { get; set; }
       public string ReportConfigurationFileName { get; set; }
       public string PKSimInstallationFolder { get; set; }
+      public string MoBiInstallationFolder { get; set; }
       public bool ForceDelete { get; set; }
       public LogLevel LogLevel { get; set; }
       public string LogFile { get; set; }
