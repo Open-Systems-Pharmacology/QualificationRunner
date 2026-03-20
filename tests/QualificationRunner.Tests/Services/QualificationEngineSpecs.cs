@@ -11,6 +11,7 @@ using QualificationRunner.Core.Services;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using IJsonSerializer = QualificationRunner.Core.Services.IJsonSerializer;
 
 namespace QualificationRunner.Tests.Services
 {
@@ -20,7 +21,7 @@ namespace QualificationRunner.Tests.Services
       protected IStartableProcessFactory _startableProcessFactory;
       protected IQualificationRunnerConfiguration _applicationConfiguration;
       protected IJsonSerializer _jsonSerializer;
-      protected QualifcationConfiguration _qualificationConfiguration;
+      protected QualificationConfiguration _qualificationConfiguration;
       protected QualificationRunOptions _runOptions;
       protected string _tempFolder;
       protected string _configFile;
@@ -51,7 +52,7 @@ namespace QualificationRunner.Tests.Services
          _pksimCliPath = Path.Combine(_tempFolder, "PKSim.CLI.exe");
          File.WriteAllText(_pksimCliPath, "fake");
 
-         _qualificationConfiguration = new QualifcationConfiguration
+         _qualificationConfiguration = new QualificationConfiguration
          {
             Project = "P1",
             TempFolder = _tempFolder,

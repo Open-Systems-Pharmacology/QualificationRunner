@@ -90,8 +90,8 @@ namespace QualificationRunner.Core.Services
       private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
 
       private async Task<QualificationRunResult[]> runThrottled(
-         QualifcationConfiguration[] configurations,
-         Func<QualifcationConfiguration, Task<QualificationRunResult>> action,
+         QualificationConfiguration[] configurations,
+         Func<QualificationConfiguration, Task<QualificationRunResult>> action,
          int maxDegreeOfParallelism)
       {
          using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
