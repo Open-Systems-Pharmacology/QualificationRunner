@@ -64,7 +64,7 @@ jobs:
 
       - name: define env variables
         run: |
-          echo "APP_VERSION=12.3.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "APP_VERSION=13.0.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build
         run: |
