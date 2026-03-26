@@ -1,12 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+    <Version Condition="'$(Version)' == ''">13.0.0</Version>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>12.0.0</Version>
-    <PackageVersion>12.0.0</PackageVersion>
-    <AssemblyVersion>12.0.0</AssemblyVersion>
-    <FileVersion>12.0.0</FileVersion>
-    <InformationalVersion>12.0.0</InformationalVersion>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <Authors>Open-Systems-Pharmacology</Authors>
@@ -14,6 +10,7 @@
     <OutputPath>bin\$(Configuration)</OutputPath>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>1591</NoWarn>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\SolutionInfo.cs" Link="Properties\SolutionInfo.cs" />
@@ -30,11 +27,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="OSPSuite.Core" Version="13.0.57" />
-    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.57" />
-    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.57" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.3" />
+    <PackageReference Include="OSPSuite.Core" Version="13.0.92" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.92" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.92" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Extensions.Options" />
