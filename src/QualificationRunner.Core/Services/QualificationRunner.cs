@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -13,6 +13,7 @@ using OSPSuite.Core.Services;
 using OSPSuite.Utility;
 using OSPSuite.Utility.Extensions;
 using QualificationRunner.Core.Domain;
+using QualificationRunner.Core.Extensions;
 using QualificationRunner.Core.RunOptions;
 using static QualificationRunner.Core.Assets.Errors;
 using static QualificationRunner.Core.Constants;
@@ -89,8 +90,8 @@ namespace QualificationRunner.Core.Services
       private Task updateProjectsFullPath(IReadOnlyList<Project> projects) => Task.WhenAll(projects.Select(updateProjectFullPath));
 
       private async Task<QualificationRunResult[]> runThrottled(
-         QualifcationConfiguration[] configurations,
-         Func<QualifcationConfiguration, Task<QualificationRunResult>> action,
+         QualificationConfiguration[] configurations,
+         Func<QualificationConfiguration, Task<QualificationRunResult>> action,
          int maxDegreeOfParallelism)
       {
          using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
@@ -119,14 +120,15 @@ namespace QualificationRunner.Core.Services
          var downloadFolder = Path.Combine(_runOptions.TempFolder, locationInTempFolder);
          DirectoryHelper.CreateDirectory(downloadFolder);
 
-         using (var wc = new WebClient())
+         using (var wc = new HttpClient())
          {
             try
             {
-               var fileName = new Uri(url).Segments.Last();
+               var uri = new Uri(url);
+               var fileName = uri.Segments.Last();
                var fileFullPath = Path.Combine(downloadFolder, fileName);
 
-               await wc.DownloadFileTaskAsync(url, fileFullPath);
+               await wc.DownloadFileTaskAsync(uri, fileFullPath);
                _logger.AddDebug($"{type} file downloaded from {url} to {fileFullPath}");
                return fileFullPath;
             }
@@ -266,7 +268,7 @@ namespace QualificationRunner.Core.Services
          var copiedIntroductionFilePath = absolutePathFrom(_runOptions.IntroFolder, fileName);
          fileInfo.CopyTo(copiedIntroductionFilePath, overwrite: true);
 
-         return new IntroFile {Path = pathRelativeToOutputFolder(copiedIntroductionFilePath)};
+         return new IntroFile { Path = pathRelativeToOutputFolder(copiedIntroductionFilePath) };
       }
 
       private static bool localFileExists(string file)
@@ -321,23 +323,23 @@ namespace QualificationRunner.Core.Services
 
       private JObject toJObject(object p) => _jsonSerializer.DeserializeFromString<dynamic>(_jsonSerializer.SerializeAsString(p));
 
-      private Task<QualificationRunResult> validateProject(QualifcationConfiguration qualificationConfiguration)
+      private Task<QualificationRunResult> validateProject(QualificationConfiguration configuration)
       {
          using (var qualificationEngine = _qualificationEngineFactory.Create())
          {
-            return qualificationEngine.Validate(qualificationConfiguration, _runOptions, CancellationToken.None);
+            return qualificationEngine.Validate(configuration, _runOptions, CancellationToken.None);
          }
       }
 
-      private Task<QualificationRunResult> runQualification(QualifcationConfiguration qualificationConfiguration)
+      private Task<QualificationRunResult> runQualification(QualificationConfiguration configuration)
       {
          using (var qualificationEngine = _qualificationEngineFactory.Create())
          {
-            return qualificationEngine.Run(qualificationConfiguration, _runOptions, CancellationToken.None);
+            return qualificationEngine.Run(configuration, _runOptions, CancellationToken.None);
          }
       }
 
-      private async Task<QualifcationConfiguration> createQualificationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
+      private async Task<QualificationConfiguration> createQualificationConfigurationFor(Project project, IReadOnlyList<Project> projects, Plots plots, IReadOnlyList<Input> alInputs)
       {
          var projectId = project.Id;
 
@@ -345,7 +347,7 @@ namespace QualificationRunner.Core.Services
 
          DirectoryHelper.CreateDirectory(tmpProjectFolder);
 
-         return new QualifcationConfiguration
+         return new QualificationConfiguration
          {
             Project = projectId,
             OutputFolder = _runOptions.OutputFolder,
@@ -359,7 +361,8 @@ namespace QualificationRunner.Core.Services
             SimulationParameters = mapSimulationParameters(project.SimulationParameters, projects),
             SimulationPlots = plots?.AllPlots?.ForProject(projectId),
             Inputs = alInputs.ForProject(projectId),
-            Simulations = plots?.ReferencedSimulations(projectId)
+            Simulations = plots?.ReferencedSimulations(projectId),
+            Application = project.Application
          };
       }
 
@@ -464,8 +467,7 @@ namespace QualificationRunner.Core.Services
          var nextLevel = currentLevel + 1;
 
          //We know with the schema that either sectionId or sectionReference is set.
-         var section = sectionId != null ? sections.FirstOrDefault(x => x.Id == sectionId) :
-            sections.FirstOrDefault(x => x.Reference == sectionReference);
+         var section = sectionId != null ? sections.FirstOrDefault(x => x.Id == sectionId) : sections.FirstOrDefault(x => x.Reference == sectionReference);
 
          if (section != null)
             return nextLevel;

@@ -5,11 +5,11 @@ using QualificationRunner.Core;
 
 namespace QualificationRunner.Tests
 {
-   public abstract class concern_for_QualificationConfigurationExtensions : ContextSpecification<QualifcationConfiguration>
+   public abstract class concern_for_QualificationConfigurationExtensions : ContextSpecification<QualificationConfiguration>
    {
       protected override void Context()
       {
-         sut = new QualifcationConfiguration();
+         sut = new QualificationConfiguration();
       }
 
    }
@@ -19,7 +19,7 @@ namespace QualificationRunner.Tests
       protected override void Context()
       {
          base.Context();
-         sut = new QualifcationConfiguration();
+         sut = new QualificationConfiguration();
       }
 
       [Observation]
@@ -34,7 +34,7 @@ namespace QualificationRunner.Tests
       protected override void Context()
       {
          base.Context();
-         sut = new QualifcationConfiguration
+         sut = new QualificationConfiguration
          {
             Simulations = new[] { "Simulation1" }
          };
@@ -52,7 +52,7 @@ namespace QualificationRunner.Tests
       protected override void Context()
       {
          base.Context();
-         sut = new QualifcationConfiguration
+         sut = new QualificationConfiguration
          {
             Inputs = new[] { new Input() }
          };
@@ -70,7 +70,7 @@ namespace QualificationRunner.Tests
       protected override void Context()
       {
          base.Context();
-         sut = new QualifcationConfiguration
+         sut = new QualificationConfiguration
          {
             SimulationPlots = new[] { new SimulationPlot() }
          };

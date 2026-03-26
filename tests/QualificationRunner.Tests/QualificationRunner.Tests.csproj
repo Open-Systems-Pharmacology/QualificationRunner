@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <IsPackable>false</IsPackable>
     <RootNamespace>QualificationRunner</RootNamespace>
@@ -17,9 +17,9 @@
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
     <PackageReference Include="OSPSuite.BDDHelper" Version="4.0.1.1" />
-    <PackageReference Include="OSPSuite.Core" Version="12.3.27" />
-    <PackageReference Include="OSPSuite.Infrastructure" Version="12.3.27" />
-    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="12.3.27" />
+    <PackageReference Include="OSPSuite.Core" Version="13.0.92" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.92" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.92" />
   </ItemGroup>
 
 </Project>
