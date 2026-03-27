@@ -96,7 +96,7 @@ jobs:
           ES_CREDENTIAL_ID: ${{ secrets.ES_CREDENTIAL_ID }}
           ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
         with:
-          file_path: ./src/QualificationRunner/bin/Debug/net472/QualificationRunner.exe
+          file_path: ./src/QualificationRunner/bin/Debug/net8.0-windows/QualificationRunner.exe
 
       - name: Create Portable Setup
         run: |
