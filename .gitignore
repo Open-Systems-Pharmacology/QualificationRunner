@@ -330,3 +330,5 @@ ASALocalRun/
 .mfractor/
 
 setup/
+/tests/TestData/SingleProject/re_input
+/tests/TestData/ProjectWithBBInheritance/re_input

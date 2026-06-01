@@ -11,7 +11,7 @@ using OSPSuite.Utility.Format;
 
 namespace QualificationRunner.Core.Services
 {
-   public class NullabeDoubleJsonConverter : JsonConverter
+   public class NullableDoubleJsonConverter : JsonConverter
    {
       private const int DOUBLE_PRECISION = 10;
 
@@ -57,15 +57,15 @@ namespace QualificationRunner.Core.Services
       }
    }
 
-   public class QualificationRunnerJsonSerializerSetings : JsonSerializerSettings
+   public class QualificationRunnerJsonSerializerSettings : JsonSerializerSettings
    {
-      public QualificationRunnerJsonSerializerSetings()
+      public QualificationRunnerJsonSerializerSettings()
       {
          TypeNameHandling = TypeNameHandling.Auto;
          NullValueHandling = NullValueHandling.Ignore;
          ContractResolver = new WritablePropertiesOnlyResolver();
          Converters.Add(new StringEnumConverter());
-         Converters.Add(new NullabeDoubleJsonConverter());
+         Converters.Add(new NullableDoubleJsonConverter());
       }
    }
 
@@ -83,7 +83,7 @@ namespace QualificationRunner.Core.Services
 
    public class JsonSerializer : IJsonSerializer
    {
-      private readonly JsonSerializerSettings _settings = new QualificationRunnerJsonSerializerSetings();
+      private readonly JsonSerializerSettings _settings = new QualificationRunnerJsonSerializerSettings();
 
       public async Task Serialize(object objectToSerialize, string fileName)
       {
