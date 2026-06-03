@@ -17,9 +17,9 @@
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
     <PackageReference Include="OSPSuite.BDDHelper" Version="4.0.1.1" />
-    <PackageReference Include="OSPSuite.Core" Version="13.0.118" />
-    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.118" />
-    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.118" />
+    <PackageReference Include="OSPSuite.Core" Version="13.0.119" />
+    <PackageReference Include="OSPSuite.Infrastructure" Version="13.0.119" />
+    <PackageReference Include="OSPSuite.Infrastructure.Castle" Version="13.0.119" />
   </ItemGroup>
 
 </Project>
