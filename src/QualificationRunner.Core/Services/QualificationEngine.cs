@@ -117,7 +117,7 @@ namespace QualificationRunner.Core.Services
             args.Add("-v");
 
          if (!string.IsNullOrEmpty(pkSimPath))
-            args.AddRange(new[] { "-p", pkSimPath });
+            args.AddRange(new[] { "-p", pkSimPath.InQuotes() });
 
          return args;
       }
