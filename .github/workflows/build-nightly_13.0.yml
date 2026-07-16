@@ -116,9 +116,10 @@ jobs:
           path: setup\QualificationRunner ${{env.APP_VERSION}}
           
   cleanup-job:
-    needs: build-nightly
-    # run only if the build-nightly job was skipped
-    if: always() && needs.build-nightly.result == 'skipped'
+    needs: [get-latest-commit-timespan, latest-pksim-portable, build-nightly]
+    # cancel the run only when build-nightly was skipped because the scheduled commit is stale,
+    # not when a prerequisite job failed (a real failure should surface, not be hidden by a cancel)
+    if: always() && needs.build-nightly.result == 'skipped' && needs.get-latest-commit-timespan.result == 'success' && needs.latest-pksim-portable.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       actions: write
