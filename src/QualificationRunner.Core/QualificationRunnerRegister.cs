@@ -1,5 +1,4 @@
 ﻿using Castle.Facilities.TypedFactory;
-using Microsoft.Extensions.Logging;
 using OSPSuite.Core;
 using OSPSuite.Core.Services;
 using OSPSuite.Infrastructure;

@@ -1,6 +1,6 @@
 name: Badge for Nightly Build
-# This workflow acts as a proxy for the nightly build workflow. 
-# Upon completion of a nightly build, it is invoked to update a repository badge 
+# This workflow acts as a proxy for the nightly build workflow.
+# Upon completion of a nightly build, it is invoked to update a repository badge
 # according to the latest run's result.
 #
 # Behavior summary:
@@ -15,7 +15,7 @@ name: Badge for Nightly Build
 on:
   workflow_run:
     workflows:
-      - "Build Nightly 12.3"
+      - "Build Nightly 13.0"
     types:
       - completed
 
@@ -26,4 +26,4 @@ jobs:
   badge:
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/nightly-badge.yml@main
     with:
-      nightly-build-workflow: "build-nightly_12.3.yml"
+      nightly-build-workflow: "build-nightly_13.0.yml"

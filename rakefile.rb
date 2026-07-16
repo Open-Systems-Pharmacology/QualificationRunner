@@ -25,7 +25,7 @@ end
 private
 
 def src_dir_for(configuration)
-	File.join(solution_dir, 'src', 'QualificationRunner', 'bin', configuration, 'net472')
+	File.join(solution_dir, 'src', 'QualificationRunner', 'bin', configuration, 'net10.0-windows')
 end
 
 def solution_dir

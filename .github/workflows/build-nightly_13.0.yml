@@ -1,20 +1,134 @@
+# Changing the workflow name will reset the run number
 name: Build Nightly 13.0
 run-name: Version 13.0.${{ github.run_number }}
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
 
 permissions:
   contents: read
   packages: read
 
 jobs:
-  check-branch:
+  get-latest-commit-timespan:
     runs-on: ubuntu-latest
+    outputs:
+      LATEST_COMMIT_TIMESPAN: ${{ steps.get-latest-commit-timespan.outputs.LATEST_COMMIT_TIMESPAN}}
     steps:
-    - name: Validate source branch
-      run: |
-        if [ "${{ github.ref_name }}" != "V13" ]; then
-          echo "::error::Please call the workflow from the V13 branch"
-          exit 1
-        fi
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get the previous commit timespan
+        id: get-latest-commit-timespan
+        shell: bash
+        run: |
+          commit=$(git log origin/develop -1 --format="%at")
+          echo $commit
+          now=$(date +%s)
+          echo $now
+          timespan=$[now - commit]
+          echo "Timespan: ${timespan}"
+          echo "LATEST_COMMIT_TIMESPAN=${timespan}" >> $GITHUB_ENV
+          echo "LATEST_COMMIT_TIMESPAN=${timespan}" >> $GITHUB_OUTPUT
+
+  latest-pksim-portable:
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/latest-artifact.yml@main
+    with:
+      repo-name: PK-Sim
+      action-name: build-nightly_v13.yml
+      artifact-pattern: PKSim Portable
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-nightly:
+    needs: [get-latest-commit-timespan, latest-pksim-portable]
+    # the build-nightly job should be run in 2 cases:
+    # - either the workflow was triggered manually (on 'workflow_dispatch')
+    # - or the workflow was triggered on schedule and last repository commit is not older than 24h (=86400 sec)
+    if: needs.get-latest-commit-timespan.outputs.LATEST_COMMIT_TIMESPAN < 86400 || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+
+      - name: Restore dependencies
+        run: |
+          nuget sources add -username Open-Systems-Pharmacology -password ${{ secrets.GITHUB_TOKEN }} -name OSP-GitHub-Packages -source "https://nuget.pkg.github.com/Open-Systems-Pharmacology/index.json"
+          nuget restore
+
+      - name: define env variables
+        run: |
+          echo "APP_VERSION=13.0.${{ github.run_number }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build
+        run: |
+          dotnet build QualificationRunner.sln /p:Version=${{env.APP_VERSION}}
+
+      - name: Download PK-Sim Portable
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.latest-pksim-portable.outputs.artifact-name }}
+          path: ./PK-Sim
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: Open-Systems-Pharmacology/PK-Sim
+          run-id: ${{ needs.latest-pksim-portable.outputs.run-id }}
+
+      - name: Set PK-Sim Installation Folder
+        shell: pwsh
+        run: |
+          $installDir = Join-Path $PWD "PK-Sim"
+          "PKSIM_INSTALLATION_FOLDER=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Test
+        run: dotnet test QualificationRunner.sln --no-build -v normal  --logger:"html;LogFileName=../../../testLog_Windows.html"
+
+      - name: Sign QualificationRunner.exe with CodeSignTool
+        uses: Open-Systems-Pharmacology/Workflows/.github/actions/codesigner-SSL@main
+        env:
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          ES_CREDENTIAL_ID: ${{ secrets.ES_CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+        with:
+          file_path: ./src/QualificationRunner/bin/Debug/net10.0-windows/QualificationRunner.exe
+
+      - name: Create Portable Setup
+        run: |
+          rake "create_portable_setup[${{env.APP_VERSION}}, Debug, qualificationrunner-portable-setup.zip]"
+
+      - name: Push test log as artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testLog_Windows
+          path: ./**/testLog*.html
+
+      - name: Push nightly portable as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Qualification Runner ${{env.APP_VERSION}}
+          path: setup\QualificationRunner ${{env.APP_VERSION}}
+          
+  cleanup-job:
+    needs: [get-latest-commit-timespan, latest-pksim-portable, build-nightly]
+    # cancel the run only when build-nightly was skipped because the scheduled commit is stale,
+    # not when a prerequisite job failed (a real failure should surface, not be hidden by a cancel)
+    if: always() && needs.build-nightly.result == 'skipped' && needs.get-latest-commit-timespan.result == 'success' && needs.latest-pksim-portable.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel workflow run
+        run: |
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel"

@@ -7,6 +7,7 @@ using OSPSuite.Core.Qualification;
 using OSPSuite.Core.Services;
 using QualificationRunner.Core.RunOptions;
 using QualificationRunner.Core.Services;
+using IJsonSerializer = QualificationRunner.Core.Services.IJsonSerializer;
 
 namespace QualificationRunner.Tests.Services
 {

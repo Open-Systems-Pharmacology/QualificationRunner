@@ -33,7 +33,7 @@ namespace QualificationRunner.Core
       /// subsequent processing steps. For more details, refer to the GitHub issue: 
       /// <see href="https://github.com/Open-Systems-Pharmacology/QualificationRunner/issues/173" />.
       /// </remarks>
-      public static bool MustBeExportedForFurtherProcessing(this QualifcationConfiguration config)
+      public static bool MustBeExportedForFurtherProcessing(this QualificationConfiguration config)
       {
          return config != null && 
             (hasAnyElements(config.Simulations) || hasAnyElements(config.Inputs) || hasAnyElements(config.SimulationPlots));

@@ -15,35 +15,10 @@ using QualificationRunner.Core.RunOptions;
 
 namespace QualificationRunner.Core.Services
 {
-   public class QualificationRunResult : IReferencingProject
-   {
-      /// <summary>
-      ///    Path of the log file associated only with the current run
-      /// </summary>
-      public string LogFilePath { get; set; }
-
-      /// <summary>
-      ///    Path of the config file associated with the rin
-      /// </summary>
-      public string ConfigFile { get; set; }
-
-      /// <summary>
-      ///    Name of the mapping file created as a result of the qualification run
-      /// </summary>
-      public string MappingFile { get; set; }
-
-      /// <summary>
-      ///    Was the run successful
-      /// </summary>
-      public bool Success { get; set; }
-
-      public string Project { get; set; }
-   }
-
    public interface IQualificationEngine : IDisposable
    {
-      Task<QualificationRunResult> Run(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken);
-      Task<QualificationRunResult> Validate(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken);
+      Task<QualificationRunResult> Run(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken);
+      Task<QualificationRunResult> Validate(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken);
    }
 
    public class QualificationEngine : IQualificationEngine
@@ -65,46 +40,59 @@ namespace QualificationRunner.Core.Services
          _jsonSerializer = jsonSerializer;
       }
 
-      public Task<QualificationRunResult> Validate(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
-         execute(qualifcationConfiguration, runOptions, cancellationToken, validate: true);
+      public Task<QualificationRunResult> Validate(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
+         execute(qualificationConfiguration, runOptions, cancellationToken, validate: true);
 
-      public Task<QualificationRunResult> Run(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
-         execute(qualifcationConfiguration, runOptions, cancellationToken, validate: false);
+      public Task<QualificationRunResult> Run(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken) =>
+         execute(qualificationConfiguration, runOptions, cancellationToken, validate: false);
 
-      private async Task<QualificationRunResult> execute(QualifcationConfiguration qualifcationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken, bool validate)
+      private async Task<QualificationRunResult> execute(QualificationConfiguration qualificationConfiguration, QualificationRunOptions runOptions, CancellationToken cancellationToken, bool validate)
       {
-         _logger.AddDebug(Logs.StartingQualificationRunForProject(qualifcationConfiguration.Project));
+         _logger.AddDebug(Logs.StartingQualificationRunForProject(qualificationConfiguration.Project));
 
-         var projectLogFile = Path.Combine(qualifcationConfiguration.TempFolder, "log.txt");
-         var logFilePaths = new List<string> { projectLogFile, runOptions.LogFile } ;
-         var configFile = Path.Combine(qualifcationConfiguration.TempFolder, "config.json");
-         var project = qualifcationConfiguration.Project;
+         var projectLogFile = Path.Combine(qualificationConfiguration.TempFolder, "log.txt");
+         var logFilePaths = new List<string> { projectLogFile, runOptions.LogFile };
+         var configFile = Path.Combine(qualificationConfiguration.TempFolder, "config.json");
+         var project = qualificationConfiguration.Project;
          var qualificationRunResult = new QualificationRunResult
          {
             ConfigFile = configFile,
             LogFilePath = projectLogFile,
             Project = project,
-            MappingFile = qualifcationConfiguration.MappingFile
+            MappingFile = qualificationConfiguration.MappingFile
          };
 
-         await _jsonSerializer.Serialize(qualifcationConfiguration, configFile);
+         await _jsonSerializer.Serialize(qualificationConfiguration, configFile);
 
          _logger.AddDebug(Logs.QualificationConfigurationForProjectExportedTo(project, configFile));
 
-         var pksimCLIPath = _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder);
+         string cliPath, moBiPKSimStarterPath = string.Empty;
+         if (qualificationConfiguration.Application == ApplicationType.PKSim)
+            cliPath = _applicationConfiguration.PKSimCLIPathFor(runOptions.PKSimInstallationFolder);
+         else
+         {
+            cliPath = _applicationConfiguration.MoBiCLIPathFor(runOptions.MoBiInstallationFolder);
 
-         if(!FileHelper.FileExists(pksimCLIPath))
-            throw new QualificationRunException(Errors.PKSimCLIFileNotFound(pksimCLIPath));
+            // If the PK-Sim folder was specified by command line argument the intent is to inform MoBi which PK-Sim instance
+            // should be used for PK-Sim services.
+            if (!string.IsNullOrEmpty(runOptions.PKSimInstallationFolder))
+               moBiPKSimStarterPath = Path.Combine(runOptions.PKSimInstallationFolder, Constants.Tools.PKSIM);
+         }
+
+         if (!FileHelper.FileExists(cliPath))
+            throw new QualificationRunException(Errors.CliFileNotFound(cliPath));
 
          return await Task.Run(() =>
          {
-            var code = startBatchProcess(configFile, logFilePaths.ToList(), runOptions.LogLevel, validate, pksimCLIPath, runOptions.Run, runOptions.ExportProjectFiles, cancellationToken);
+            var args = createArgs(configFile, logFilePaths.ToList(), runOptions.LogLevel, validate, runOptions.Run, runOptions.ExportProjectFiles, moBiPKSimStarterPath);
+
+            var code = startBatchProcess(args, cliPath, cancellationToken);
             qualificationRunResult.Success = (code == ExitCodes.Success);
             return qualificationRunResult;
          }, cancellationToken);
       }
 
-      private ExitCodes startBatchProcess(string configFile, List<string> logFilePaths, LogLevel logLevel, bool validate, string pksimCLIPath, bool run, bool exportProjectFiles,  CancellationToken cancellationToken)
+      private static List<string> createArgs(string configFile, List<string> logFilePaths, LogLevel logLevel, bool validate, bool run, bool exportProjectFiles, string pkSimPath)
       {
          var quotedPaths = logFilePaths.Select(element => element.InQuotes());
 
@@ -119,7 +107,7 @@ namespace QualificationRunner.Core.Services
             logLevel.ToString()
          };
 
-         if(run)
+         if (run)
             args.Add("-r");
 
          if (exportProjectFiles)
@@ -128,12 +116,20 @@ namespace QualificationRunner.Core.Services
          if (validate)
             args.Add("-v");
 
-         using (var process = _startableProcessFactory.CreateStartableProcess(pksimCLIPath, args.ToArray()))
+         if (!string.IsNullOrEmpty(pkSimPath))
+            args.AddRange(new[] { "-p", pkSimPath.InQuotes() });
+
+         return args;
+      }
+
+      private ExitCodes startBatchProcess(List<string> args, string cliPath, CancellationToken cancellationToken)
+      {
+         using (var process = _startableProcessFactory.CreateStartableProcess(cliPath, args.ToArray()))
          {
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            process.Start();
+            process.Start(ProcessPriorityClass.Idle);
             process.Wait(cancellationToken);
-            return (ExitCodes) process.ReturnCode;
+            return (ExitCodes)process.ReturnCode;
          }
       }
 
