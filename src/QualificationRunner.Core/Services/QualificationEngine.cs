@@ -130,9 +130,6 @@ namespace QualificationRunner.Core.Services
          using (var process = _startableProcessFactory.CreateStartableProcess(cliPath, args.ToArray()))
          {
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            // Belt-and-braces to the --cores 1 argument: capping the processor count visible to the child .NET
-            // runtime also bounds what the runtime itself sizes by core count (thread pool, GC heaps), which the
-            // --cores flag does not. Children running on the .NET Framework ignore this variable.
             process.StartInfo.Environment[Constants.DOTNET_PROCESSOR_COUNT] = "1";
             process.Start(ProcessPriorityClass.Idle);
             process.Wait(cancellationToken);
