@@ -48,5 +48,11 @@ namespace QualificationRunner.Core.RunOptions
       ///    Should the qualification runner also export the project files (snapshot and PK-Sim project file).
       /// </summary>
       public bool ExportProjectFiles { get; set; }
+
+      /// <summary>
+      ///    Maximal number of CLI processes that will be started concurrently. When not set, the number of logical
+      ///    processors of the machine is used.
+      /// </summary>
+      public int? NumberOfCores { get; set; }
    }
 }

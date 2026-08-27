@@ -127,6 +127,10 @@ namespace QualificationRunner.Core.Services
          using (var process = _startableProcessFactory.CreateStartableProcess(cliPath, args.ToArray()))
          {
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            // The runner owns parallelism: it starts one CLI process per project. Capping the processor count
+            // visible to the child .NET runtime makes the child run its internal work serially and bounds its
+            // thread pool and GC heap count. Children running on the .NET Framework ignore this variable.
+            process.StartInfo.Environment[Constants.DOTNET_PROCESSOR_COUNT] = "1";
             process.Start(ProcessPriorityClass.Idle);
             process.Wait(cancellationToken);
             return (ExitCodes)process.ReturnCode;

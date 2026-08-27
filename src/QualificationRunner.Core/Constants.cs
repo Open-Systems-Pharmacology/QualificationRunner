@@ -17,6 +17,7 @@ namespace QualificationRunner.Core
       public const string INTRO_FOLDER = "Intro";
       public const string TEMP_FOLDER = "temp";
       public const string PROJECT_DOWNLOAD_FOLDER = "_project";
+      public const string DOTNET_PROCESSOR_COUNT = "DOTNET_PROCESSOR_COUNT";
       public const string OBSERVED_DATA_DOWNLOAD_FOLDER = "_observedData";
       public const string CONTENT_DOWNLOAD_FOLDER = "_content";
       public const string INTRODUCTION_DOWNLOAD_FOLDER = "_intro";
