@@ -126,12 +126,15 @@ namespace QualificationRunner.Tests.Services
    {
       private TestStartableProcess _process;
       private QualificationRunResult _result;
+      private string[] _args;
 
       protected override void Context()
       {
          base.Context();
          _process = new TestStartableProcess();
-         A.CallTo(() => _startableProcessFactory.CreateStartableProcess(A<string>._, A<string[]>._)).Returns(_process);
+         A.CallTo(() => _startableProcessFactory.CreateStartableProcess(A<string>._, A<string[]>._))
+            .Invokes(call => _args = call.Arguments.Get<string[]>(1))
+            .Returns(_process);
       }
 
       protected override void Because()
@@ -149,6 +152,12 @@ namespace QualificationRunner.Tests.Services
       public void should_limit_the_processor_count_visible_to_the_cli_process()
       {
          _process.StartInfo.Environment[Constants.DOTNET_PROCESSOR_COUNT].ShouldBeEqualTo("1");
+      }
+
+      [Observation]
+      public void should_start_the_cli_process_with_a_single_core()
+      {
+         string.Join(" ", _args).Contains("--cores 1").ShouldBeTrue();
       }
 
       //Starts a real trivial process so that the engine can read an exit code once the process has exited
