@@ -8,6 +8,7 @@ using OSPSuite.Core.Services;
 using QualificationRunner.Core;
 using QualificationRunner.Core.RunOptions;
 using QualificationRunner.Core.Services;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -119,6 +120,56 @@ namespace QualificationRunner.Tests.Services
             .ShouldThrowAn<QualificationRunException>();
       }
 
+   }
+
+   public class When_running_a_qualification_and_the_cli_process_exits_successfully : concern_for_QualificationEngine
+   {
+      private TestStartableProcess _process;
+      private QualificationRunResult _result;
+      private string[] _args;
+
+      protected override void Context()
+      {
+         base.Context();
+         _process = new TestStartableProcess();
+         A.CallTo(() => _startableProcessFactory.CreateStartableProcess(A<string>._, A<string[]>._))
+            .Invokes(call => _args = call.Arguments.Get<string[]>(1))
+            .Returns(_process);
+      }
+
+      protected override void Because()
+      {
+         _result = sut.Run(_qualificationConfiguration, _runOptions, CancellationToken.None).Result;
+      }
+
+      [Observation]
+      public void should_return_a_successful_result()
+      {
+         _result.Success.ShouldBeTrue();
+      }
+
+      [Observation]
+      public void should_limit_the_processor_count_visible_to_the_cli_process()
+      {
+         _process.StartInfo.Environment[Constants.DOTNET_PROCESSOR_COUNT].ShouldBeEqualTo("1");
+      }
+
+      [Observation]
+      public void should_start_the_cli_process_with_a_single_core()
+      {
+         string.Join(" ", _args).Contains("--cores 1").ShouldBeTrue();
+      }
+
+      //Starts a real trivial process so that the engine can read an exit code once the process has exited
+      private class TestStartableProcess : StartableProcess
+      {
+         public TestStartableProcess() : base("cmd.exe", "/c", "exit 0")
+         {
+         }
+
+         //do not apply the priority: the trivial process may already have exited when the priority would be set
+         public override void Start(ProcessPriorityClass? priority = null) => base.Start();
+      }
    }
 
    public class When_running_a_qualification_with_an_already_canceled_token : concern_for_QualificationEngine

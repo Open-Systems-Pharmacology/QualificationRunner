@@ -104,7 +104,10 @@ namespace QualificationRunner.Core.Services
             "-l",
             string.Join(" ", quotedPaths),
             "--logLevel",
-            logLevel.ToString()
+            logLevel.ToString(),
+            // The runner owns parallelism: it starts one CLI process per project, so each child runs internally serial
+            "--cores",
+            "1"
          };
 
          if (run)
@@ -127,6 +130,7 @@ namespace QualificationRunner.Core.Services
          using (var process = _startableProcessFactory.CreateStartableProcess(cliPath, args.ToArray()))
          {
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.StartInfo.Environment[Constants.DOTNET_PROCESSOR_COUNT] = "1";
             process.Start(ProcessPriorityClass.Idle);
             process.Wait(cancellationToken);
             return (ExitCodes)process.ReturnCode;

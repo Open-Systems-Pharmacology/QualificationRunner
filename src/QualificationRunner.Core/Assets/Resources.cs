@@ -35,5 +35,7 @@ namespace QualificationRunner.Core.Assets
       public static string SnapshotFileNotFound(string snapshotFilePath) => $"Snapshot file '{snapshotFilePath}' does not exist.";
 
       public static string ConfigurationFileNotFound(string configurationFilePath) => $"Configuration file '{configurationFilePath}' does not exist.";
+
+      public static string InvalidNumberOfCores(int numberOfCores) => $"Invalid number of cores '{numberOfCores}'. The value must be greater than or equal to 1.";
    }
 }

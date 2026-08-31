@@ -35,6 +35,9 @@ namespace QualificationRunner.Commands
       [Option('m', "mobi", Required = false, HelpText = "Optional. Path of MoBi installation folder. If not specified, installation path will be read from registry (e.g required full install of MoBi via setup)")]
       public string MoBiInstallationFolder { get; set; }
 
+      [Option('c', "cores", Required = false, HelpText = "Optional. Maximal number of PK-Sim/MoBi CLI processes that will be started concurrently. Default is the number of logical processors of the machine.")]
+      public int? NumberOfCores { get; set; }
+
       public override QualificationRunOptions ToRunOptions()
       {
          return new QualificationRunOptions
@@ -50,7 +53,8 @@ namespace QualificationRunner.Commands
             LogFile = LogFileFullPath,
             //TODO switch to RUN when we move to R
             Run = !NoRun,
-            ExportProjectFiles = ExportProjectFiles
+            ExportProjectFiles = ExportProjectFiles,
+            NumberOfCores = NumberOfCores
          };
       }
 
@@ -63,6 +67,9 @@ namespace QualificationRunner.Commands
          sb.AppendLine($"Output folder: {OutputFolder}");
          sb.AppendLine($"Run simulations: {!NoRun}");
          sb.AppendLine($"Export project files: {ExportProjectFiles}");
+
+         if (NumberOfCores.HasValue)
+            sb.AppendLine($"Number of cores: {NumberOfCores}");
 
          return sb.ToString();
       }

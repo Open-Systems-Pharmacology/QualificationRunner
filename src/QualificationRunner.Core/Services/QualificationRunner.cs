@@ -40,6 +40,9 @@ namespace QualificationRunner.Core.Services
       {
          _runOptions = runOptions;
 
+         if (runOptions.NumberOfCores <= 0)
+            throw new QualificationRunException(InvalidNumberOfCores(runOptions.NumberOfCores.Value));
+
          if (!FileHelper.FileExists(runOptions.ConfigurationFile))
             throw new QualificationRunException(ConfigurationFileNotFound(runOptions.ConfigurationFile));
 
@@ -66,7 +69,8 @@ namespace QualificationRunner.Core.Services
          StaticFiles staticFiles = await copyStaticFiles(qualificationPlan);
 
          _logger.AddInfo("Starting validation runs...");
-         var numberOfCores = Environment.ProcessorCount;
+         var numberOfCores = _runOptions.NumberOfCores ?? Environment.ProcessorCount;
+         _logger.AddDebug($"Up to {numberOfCores} CLI processes will be started concurrently");
          var validations = await runThrottled(projectConfigurations, validateProject, numberOfCores);
 
          var invalidConfigurations = validations.Where(x => !x.Success).ToList();

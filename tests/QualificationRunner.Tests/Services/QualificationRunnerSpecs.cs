@@ -50,6 +50,27 @@ namespace QualificationRunner.Tests.Services
       }
    }
 
+   public class When_running_a_batch_with_an_invalid_number_of_cores : concern_for_QualificationRunner
+   {
+      private QualificationRunOptions _runOptions;
+
+      protected override void Context()
+      {
+         base.Context();
+         _runOptions = new QualificationRunOptions
+         {
+            NumberOfCores = 0
+         };
+      }
+
+      [Observation]
+      public void should_throw_a_qualification_run_exception()
+      {
+         The.Action(async () => await sut.RunBatchAsync(_runOptions))
+            .ShouldThrowAn<QualificationRunException>();
+      }
+   }
+
    public class When_removing_a_property_by_name_from_a_json_object : concern_for_QualificationRunner
    {
       [Observation]
