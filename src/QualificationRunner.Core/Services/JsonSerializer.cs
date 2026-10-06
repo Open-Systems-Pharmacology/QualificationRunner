@@ -61,7 +61,6 @@ namespace QualificationRunner.Core.Services
    {
       public QualificationRunnerJsonSerializerSettings()
       {
-         TypeNameHandling = TypeNameHandling.Auto;
          NullValueHandling = NullValueHandling.Ignore;
          ContractResolver = new WritablePropertiesOnlyResolver();
          Converters.Add(new StringEnumConverter());

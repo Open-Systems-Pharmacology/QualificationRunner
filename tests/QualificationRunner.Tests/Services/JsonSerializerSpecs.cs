@@ -141,6 +141,29 @@ namespace QualificationRunner.Tests.Services
       }
    }
 
+   public class When_deserializing_json_whose_root_has_a_dollar_type_naming_another_class : concern_for_JsonSerializer
+   {
+      [Observation]
+      public void should_not_instantiate_the_named_type_and_deserialize_the_requested_type()
+      {
+         TypeNamedInJson.Instantiated = false;
+         var json = $"{{\"$type\":\"{typeof(TypeNamedInJson).AssemblyQualifiedName}\",\"Name\":\"abc\",\"Value\":10}}";
+
+         var result = sut.DeserializeFromString<TestDto>(json);
+
+         TypeNamedInJson.Instantiated.ShouldBeFalse();
+         result.Name.ShouldBeEqualTo("abc");
+         result.Value.ShouldBeEqualTo(10);
+      }
+   }
+
+   internal class TypeNamedInJson
+   {
+      public static bool Instantiated;
+
+      public TypeNamedInJson() => Instantiated = true;
+   }
+
    internal class TestDto
    {
       public string Name { get; set; }
