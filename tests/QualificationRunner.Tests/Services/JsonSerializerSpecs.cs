@@ -157,6 +157,30 @@ namespace QualificationRunner.Tests.Services
       }
    }
 
+   public class When_deserializing_json_with_dollar_types_while_the_global_json_settings_enable_type_names : concern_for_JsonSerializer
+   {
+      [Observation]
+      public void should_instantiate_neither_the_root_nor_the_nested_named_type()
+      {
+         var originalDefaultSettings = Newtonsoft.Json.JsonConvert.DefaultSettings;
+         Newtonsoft.Json.JsonConvert.DefaultSettings = () => new Newtonsoft.Json.JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto };
+         try
+         {
+            TypeNamedInJson.Instantiated = false;
+            var typeName = typeof(TypeNamedInJson).AssemblyQualifiedName;
+
+            var result = sut.DeserializeFromString<ObjectValueDto>($"{{\"$type\":\"{typeName}\",\"Name\":\"abc\",\"Value\":{{\"$type\":\"{typeName}\"}}}}");
+
+            TypeNamedInJson.Instantiated.ShouldBeFalse();
+            result.Name.ShouldBeEqualTo("abc");
+         }
+         finally
+         {
+            Newtonsoft.Json.JsonConvert.DefaultSettings = originalDefaultSettings;
+         }
+      }
+   }
+
    internal class TypeNamedInJson
    {
       public static bool Instantiated;
@@ -174,5 +198,11 @@ namespace QualificationRunner.Tests.Services
    internal class NullableDoubleDto
    {
       public double? Number { get; set; }
+   }
+
+   internal class ObjectValueDto
+   {
+      public string Name { get; set; }
+      public object Value { get; set; }
    }
 }

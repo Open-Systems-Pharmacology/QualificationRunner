@@ -61,6 +61,8 @@ namespace QualificationRunner.Core.Services
    {
       public QualificationRunnerJsonSerializerSettings()
       {
+         TypeNameHandling = TypeNameHandling.None;
+         CheckAdditionalContent = true;
          NullValueHandling = NullValueHandling.Ignore;
          ContractResolver = new WritablePropertiesOnlyResolver();
          Converters.Add(new StringEnumConverter());
@@ -114,7 +116,7 @@ namespace QualificationRunner.Core.Services
 
       private object[] deserializeAsArrayFromString(string json, Type objectType)
       {
-         var deserializedSnapshot = JsonConvert.DeserializeObject(json, _settings);
+         var deserializedSnapshot = parse(json);
 
          switch (deserializedSnapshot)
          {
@@ -125,6 +127,14 @@ namespace QualificationRunner.Core.Services
                return array.Select(x => validatedObject(x, objectType)).ToArray();
             default:
                return null;
+         }
+      }
+
+      private object parse(string json)
+      {
+         using (var reader = new JsonTextReader(new StringReader(json)))
+         {
+            return createSerializer().Deserialize(reader);
          }
       }
 
@@ -154,8 +164,10 @@ namespace QualificationRunner.Core.Services
 
       private object validatedObject(JToken jToken, Type snapshotType)
       {
-         return jToken.ToObject(snapshotType);
+         return jToken.ToObject(snapshotType, createSerializer());
       }
+
+      private Newtonsoft.Json.JsonSerializer createSerializer() => Newtonsoft.Json.JsonSerializer.Create(_settings);
 
 //      private JSchema validateSnapshot(Type snapshotType)
 //      {
