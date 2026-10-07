@@ -141,6 +141,53 @@ namespace QualificationRunner.Tests.Services
       }
    }
 
+   public class When_deserializing_json_whose_root_has_a_dollar_type_naming_another_class : concern_for_JsonSerializer
+   {
+      [Observation]
+      public void should_not_instantiate_the_named_type_and_deserialize_the_requested_type()
+      {
+         TypeNamedInJson.Instantiated = false;
+         var json = $"{{\"$type\":\"{typeof(TypeNamedInJson).AssemblyQualifiedName}\",\"Name\":\"abc\",\"Value\":10}}";
+
+         var result = sut.DeserializeFromString<TestDto>(json);
+
+         TypeNamedInJson.Instantiated.ShouldBeFalse();
+         result.Name.ShouldBeEqualTo("abc");
+         result.Value.ShouldBeEqualTo(10);
+      }
+   }
+
+   public class When_deserializing_json_with_dollar_types_while_the_global_json_settings_enable_type_names : concern_for_JsonSerializer
+   {
+      [Observation]
+      public void should_instantiate_neither_the_root_nor_the_nested_named_type()
+      {
+         var originalDefaultSettings = Newtonsoft.Json.JsonConvert.DefaultSettings;
+         Newtonsoft.Json.JsonConvert.DefaultSettings = () => new Newtonsoft.Json.JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto };
+         try
+         {
+            TypeNamedInJson.Instantiated = false;
+            var typeName = typeof(TypeNamedInJson).AssemblyQualifiedName;
+
+            var result = sut.DeserializeFromString<ObjectValueDto>($"{{\"$type\":\"{typeName}\",\"Name\":\"abc\",\"Value\":{{\"$type\":\"{typeName}\"}}}}");
+
+            TypeNamedInJson.Instantiated.ShouldBeFalse();
+            result.Name.ShouldBeEqualTo("abc");
+         }
+         finally
+         {
+            Newtonsoft.Json.JsonConvert.DefaultSettings = originalDefaultSettings;
+         }
+      }
+   }
+
+   internal class TypeNamedInJson
+   {
+      public static bool Instantiated;
+
+      public TypeNamedInJson() => Instantiated = true;
+   }
+
    internal class TestDto
    {
       public string Name { get; set; }
@@ -151,5 +198,11 @@ namespace QualificationRunner.Tests.Services
    internal class NullableDoubleDto
    {
       public double? Number { get; set; }
+   }
+
+   internal class ObjectValueDto
+   {
+      public string Name { get; set; }
+      public object Value { get; set; }
    }
 }
